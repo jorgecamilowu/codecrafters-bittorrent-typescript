@@ -10,7 +10,7 @@ function validateBeencodedInt(beencoded: string): boolean {
   );
 }
 
-function decodeBencode(bencodedValue: string): string {
+function decodeBencode(bencodedValue: string): string | number {
   /* This function is used to decode a bencoded string
     The bencoded string is a string that is prefixed by the length of the string
     **/
@@ -31,7 +31,17 @@ function decodeBencode(bencodedValue: string): string {
       );
     }
 
-    return bencodedValue.substring(1, bencodedValue.length - 1);
+    const output = parseInt(
+      bencodedValue.substring(1, bencodedValue.length - 1)
+    );
+
+    if (isNaN(output)) {
+      throw new Error(
+        "Invalid beencoded integer format. Should start with 'i' and end with 'e'"
+      );
+    }
+
+    return output;
   }
 
   throw new Error("Unsupported encoded value");
