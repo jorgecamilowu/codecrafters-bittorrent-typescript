@@ -1,28 +1,39 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { ListDecoder } from "./ListDecoder";
-import { IntegerDecoder } from "./IntegerDecoder";
-import { StringDecoder } from "./StringDecoder";
+import type { Decoder } from "./Decoder";
 
 describe("List Decoder", () => {
+  let decoder: Decoder;
+
+  beforeEach(() => {
+    decoder = new ListDecoder();
+  });
+
+  it("takes the next list element", () => {
+    const encoded = "lli23e2:hii8eeeli44ei55ee";
+    const [next, rest] = decoder.takeNext(encoded);
+    expect(next).toBe("lli23e2:hii8eee");
+    expect(rest).toBe("li44ei55ee");
+  });
+
   it("decodes an empty list", () => {
-    const decoder = new ListDecoder([
-      new IntegerDecoder(),
-      new StringDecoder(),
-    ]);
-
-    const bencoded = "le";
-
-    expect(decoder.decode(bencoded)).toEqual([]);
+    expect(decoder.decode("le")).toEqual([]);
   });
 
   it("decodes a list of Integer bencoded values", () => {
-    const decoder = new ListDecoder([
-      new IntegerDecoder(),
-      new StringDecoder(),
+    expect(decoder.decode("li1ei2e2:hii223ei-5e5:helloe")).toEqual([
+      1,
+      2,
+      "hi",
+      223,
+      -5,
+      "hello",
     ]);
+  });
 
-    const bencoded = "li1ei2e2:hii223ei-5e5:helloe";
+  it("decodes nested lists", () => {
+    const result = decoder.decode("llli869e6:bananaeel5:helloi99eee");
 
-    expect(decoder.decode(bencoded)).toEqual([1, 2, "hi", 223, -5, "hello"]);
+    expect(result).toEqual([[[869, "banana"]], ["hello", 99]]);
   });
 });

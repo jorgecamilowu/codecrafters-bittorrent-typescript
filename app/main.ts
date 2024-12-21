@@ -7,11 +7,11 @@ import { ListDecoder } from "./decoders/ListDecoder";
 import { StringDecoder } from "./decoders/StringDecoder";
 
 export function decodeBencode(bencodedValue: string) {
-  const decoders = [
-    new IntegerDecoder(),
-    new StringDecoder(),
-    new ListDecoder([new IntegerDecoder(), new StringDecoder()]),
-  ];
+  const intDecoder = new IntegerDecoder();
+  const stringDecoder = new StringDecoder();
+  const listDecoder = new ListDecoder();
+
+  const decoders = [stringDecoder, intDecoder, listDecoder];
 
   const decoder = decoders.find((decoder) => decoder.match(bencodedValue));
 

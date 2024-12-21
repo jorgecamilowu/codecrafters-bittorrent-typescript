@@ -1,15 +1,42 @@
 import type { Decoder } from "./Decoder";
+import { IntegerDecoder } from "./IntegerDecoder";
+import { StringDecoder } from "./StringDecoder";
 
 export class ListDecoder implements Decoder {
-  decodedValues: unknown[] = [];
+  private decoders: Decoder[];
 
-  constructor(private readonly decoders: Decoder[]) {}
+  constructor() {
+    this.decoders = [new StringDecoder(), new IntegerDecoder(), this];
+  }
+
   match(benecodedValue: string): boolean {
     return benecodedValue[0] === "l";
   }
 
   takeNext(bencoded: string): [string, string] {
-    return [bencoded, ""];
+    const withoutL = bencoded.slice(1);
+
+    let offset = 0;
+
+    while (offset < bencoded.length) {
+      if (withoutL[offset] === "e") {
+        break;
+      }
+
+      const offseted = withoutL.slice(offset);
+
+      const decoder = this.decoders.find((dec) => dec.match(offseted));
+
+      if (withoutL[0] === "l") {
+        const [next] = this.takeNext(offseted);
+        offset += next.length;
+      } else if (decoder) {
+        const [next] = decoder.takeNext(offseted);
+        offset += next.length;
+      }
+    }
+
+    return [bencoded.slice(0, offset + 2), bencoded.slice(offset + 2)];
   }
 
   validate(bencodedValue: string): boolean {
@@ -27,15 +54,15 @@ export class ListDecoder implements Decoder {
       );
     }
 
-    this.decodeNext(benecodedValue.slice(1, benecodedValue.length - 1));
-
-    return this.decodedValues;
+    return this.decodeNext(benecodedValue.slice(1, benecodedValue.length - 1));
   }
 
-  decodeNext(bencodedValue: string) {
+  decodeNext(bencodedValue: string): unknown[] {
     if (bencodedValue === "") {
-      return;
+      return [];
     }
+
+    const decodedValues = [];
 
     const decoder = this.decoders.find((decoder) =>
       decoder.match(bencodedValue)
@@ -49,14 +76,16 @@ export class ListDecoder implements Decoder {
       });
     }
 
-    const [current, rest] = decoder.takeNext(bencodedValue);
+    const [next, rest] = decoder.takeNext(bencodedValue);
 
-    const currentDecoded = decoder.decode(current);
+    const currentDecoded = decoder.decode(next);
 
-    this.decodedValues.push(currentDecoded);
+    decodedValues.push(currentDecoded);
 
     if (rest) {
-      this.decodeNext(rest);
+      decodedValues.push(...this.decodeNext(rest));
     }
+
+    return decodedValues;
   }
 }
