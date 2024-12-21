@@ -34,6 +34,8 @@ if (args[2] === "decode") {
     const decoded = decodeBencode(bencodedValue);
     console.log(JSON.stringify(decoded));
   } catch (error) {
-    console.error(error.message);
+    if (error instanceof Error) {
+      console.error(error.message);
+    }
   }
 }
