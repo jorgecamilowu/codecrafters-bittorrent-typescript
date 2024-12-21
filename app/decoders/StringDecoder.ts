@@ -6,16 +6,18 @@ export class StringDecoder implements Decoder {
   }
 
   takeNext(bencodedValue: string): [string, string] {
-    const length = parseInt(bencodedValue[0]);
+    const colonPosition = bencodedValue.indexOf(":");
+
+    const length = parseInt(bencodedValue.slice(0, colonPosition));
 
     return [
-      bencodedValue.slice(0, 2 + length),
-      bencodedValue.slice(2 + length),
+      bencodedValue.slice(0, length + colonPosition + 1),
+      bencodedValue.slice(length + colonPosition + 1),
     ];
   }
 
   private validate(bencodedValue: string) {
-    return bencodedValue.length >= 2 && bencodedValue[1] === ":";
+    return bencodedValue.indexOf(":") !== -1;
   }
 
   decode(bencodedValue: string): string {
@@ -30,6 +32,6 @@ export class StringDecoder implements Decoder {
       );
     }
 
-    return bencodedValue.slice(2);
+    return bencodedValue.slice(bencodedValue.indexOf(":") + 1);
   }
 }
