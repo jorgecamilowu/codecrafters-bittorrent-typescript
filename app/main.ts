@@ -2,49 +2,24 @@
 // - decodeBencode("5:hello") -> "hello"
 // - decodeBencode("10:hello12345") -> "hello12345"
 
-function validateBeencodedInt(beencoded: string): boolean {
-  return (
-    beencoded.length >= 3 &&
-    beencoded[0] === "i" &&
-    beencoded[bencodedValue.length - 1] === "e"
-  );
-}
+import { IntegerDecoder } from "./decoders/IntegerDecoder";
+import { ListDecoder } from "./decoders/ListDecoder";
+import { StringDecoder } from "./decoders/StringDecoder";
 
-function decodeBencode(bencodedValue: string): string | number {
-  /* This function is used to decode a bencoded string
-    The bencoded string is a string that is prefixed by the length of the string
-    **/
+export function decodeBencode(bencodedValue: string) {
+  const decoders = [
+    new IntegerDecoder(),
+    new StringDecoder(),
+    new ListDecoder([new IntegerDecoder(), new StringDecoder()]),
+  ];
 
-  // Check if the first character is a digit
-  if (!isNaN(parseInt(bencodedValue[0]))) {
-    const firstColonIndex = bencodedValue.indexOf(":");
-    if (firstColonIndex === -1) {
-      throw new Error("Invalid encoded value");
-    }
-    return bencodedValue.substring(firstColonIndex + 1);
+  const decoder = decoders.find((decoder) => decoder.match(bencodedValue));
+
+  if (!decoder) {
+    throw new Error("Unsupported format!");
   }
 
-  if (bencodedValue[0] === "i") {
-    if (!validateBeencodedInt(bencodedValue)) {
-      throw new Error(
-        "Invalid beencoded integer format. Should start with 'i' and end with 'e'"
-      );
-    }
-
-    const output = parseInt(
-      bencodedValue.substring(1, bencodedValue.length - 1)
-    );
-
-    if (isNaN(output)) {
-      throw new Error(
-        "Invalid beencoded integer format. Should start with 'i' and end with 'e'"
-      );
-    }
-
-    return output;
-  }
-
-  throw new Error("Unsupported encoded value");
+  return decoder.decode(bencodedValue);
 }
 
 const args = process.argv;
