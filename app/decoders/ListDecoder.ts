@@ -27,10 +27,7 @@ export class ListDecoder implements Decoder {
 
       const decoder = this.decoders.find((dec) => dec.match(offseted));
 
-      if (withoutL[0] === "l") {
-        const [next] = this.takeNext(offseted);
-        offset += next.length;
-      } else if (decoder) {
+      if (decoder) {
         const [next] = decoder.takeNext(offseted);
         offset += next.length;
       }
