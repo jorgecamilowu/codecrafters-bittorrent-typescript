@@ -15,7 +15,7 @@ export class StringDecoder implements Decoder {
   }
 
   private validate(bencodedValue: string) {
-    return bencodedValue.length > 2 && bencodedValue[1] === ":";
+    return bencodedValue.length >= 2 && bencodedValue[1] === ":";
   }
 
   decode(bencodedValue: string): string {

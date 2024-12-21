@@ -22,7 +22,7 @@ export class IntegerDecoder implements Decoder {
   }
   private validateBenecodedValue(bencodedValue: string) {
     return (
-      bencodedValue.length >= 3 &&
+      bencodedValue.length >= 2 &&
       bencodedValue[0] === "i" &&
       bencodedValue[bencodedValue.length - 1] === "e"
     );
@@ -40,7 +40,13 @@ export class IntegerDecoder implements Decoder {
       );
     }
 
-    const output = parseInt(bencodedValue.slice(1, bencodedValue.length - 1));
+    const stringInt = bencodedValue.slice(1, bencodedValue.length - 1);
+
+    if (stringInt === "") {
+      return 0;
+    }
+
+    const output = parseInt(stringInt);
 
     if (isNaN(output)) {
       throw new Error("Could not parse out value", {

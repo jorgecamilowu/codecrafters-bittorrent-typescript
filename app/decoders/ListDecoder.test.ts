@@ -4,6 +4,17 @@ import { IntegerDecoder } from "./IntegerDecoder";
 import { StringDecoder } from "./StringDecoder";
 
 describe("List Decoder", () => {
+  it("decodes an empty list", () => {
+    const decoder = new ListDecoder([
+      new IntegerDecoder(),
+      new StringDecoder(),
+    ]);
+
+    const bencoded = "le";
+
+    expect(decoder.decode(bencoded)).toEqual([]);
+  });
+
   it("decodes a list of Integer bencoded values", () => {
     const decoder = new ListDecoder([
       new IntegerDecoder(),

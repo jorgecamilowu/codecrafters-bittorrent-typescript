@@ -33,6 +33,10 @@ export class ListDecoder implements Decoder {
   }
 
   decodeNext(bencodedValue: string) {
+    if (bencodedValue === "") {
+      return;
+    }
+
     const decoder = this.decoders.find((decoder) =>
       decoder.match(bencodedValue)
     );
