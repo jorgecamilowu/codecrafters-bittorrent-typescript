@@ -52,7 +52,7 @@ export class DictionaryDecoder implements Decoder {
     );
   }
 
-  decode(bencodedValue: string): unknown {
+  decode(bencodedValue: string): Record<string, unknown> {
     if (!this.validate(bencodedValue)) {
       throw new Error(
         "Invalid dictionary encoding format. Dictionary encoded values should start with 'd' followed by the key value pairs and ending with 'e'",

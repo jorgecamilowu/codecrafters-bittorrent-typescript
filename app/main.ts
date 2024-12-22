@@ -7,14 +7,16 @@ import { IntegerDecoder } from "./decoders/IntegerDecoder";
 import { ListDecoder } from "./decoders/ListDecoder";
 import { StringDecoder } from "./decoders/StringDecoder";
 
-export function decodeBencode(bencodedValue: string) {
-  const decoders = [
-    new StringDecoder(),
-    new IntegerDecoder(),
-    new ListDecoder(),
-    new DictionaryDecoder(),
-  ];
+const dictionaryDecoder = new DictionaryDecoder();
 
+const decoders = [
+  new StringDecoder(),
+  new IntegerDecoder(),
+  new ListDecoder(),
+  dictionaryDecoder,
+];
+
+export function decodeBencode(bencodedValue: string) {
   const decoder = decoders.find((decoder) => decoder.match(bencodedValue));
 
   if (!decoder) {
@@ -22,6 +24,15 @@ export function decodeBencode(bencodedValue: string) {
   }
 
   return decoder.decode(bencodedValue);
+}
+
+export async function info(filePath: string) {
+  const file = await Bun.file(filePath).text();
+
+  const torrentInfo = dictionaryDecoder.decode(file);
+
+  console.log(`Tracker URL: ${torrentInfo.announce}`);
+  console.log(`Length: ${torrentInfo.info["piece length"]}`);
 }
 
 const args = process.argv;
@@ -40,4 +51,6 @@ if (args[2] === "decode") {
       console.error(error.message);
     }
   }
+} else if (args[2] === "info") {
+  info(bencodedValue);
 }
