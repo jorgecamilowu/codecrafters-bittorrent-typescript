@@ -64,6 +64,10 @@ export class DictionaryDecoder implements Decoder {
   }
 
   recurse(bencodedValue: string): Record<string, unknown> {
+    if (bencodedValue === "") {
+      return {};
+    }
+
     const result: Record<string, unknown> = {};
 
     const [encodedKey, rest] = this.keyDecoder.takeNext(bencodedValue);

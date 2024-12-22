@@ -15,6 +15,10 @@ describe("Dictionary Decoder", () => {
     expect(rest).toBe("i99e");
   });
 
+  it("decodes empty dictionaries", () => {
+    expect(decoder.decode("de")).toEqual({});
+  });
+
   it("decodes a dictionary", () => {
     const bencoded = "d4:listli1ei2ee3:food2:hii5ee5:helloi52ee";
     // const bencoded = "d4:listli1ei2ed6:nestedi1eee3:food2:hii5ee5:helloi52ee";
