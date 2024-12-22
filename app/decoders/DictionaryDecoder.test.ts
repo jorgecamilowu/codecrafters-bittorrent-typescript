@@ -14,4 +14,22 @@ describe("Dictionary Decoder", () => {
     expect(next).toBe("d3:food2:hii5ee5:helloi52ee");
     expect(rest).toBe("i99e");
   });
+
+  it("decodes a dictionary", () => {
+    const bencoded = "d4:listli1ei2ee3:food2:hii5ee5:helloi52ee";
+    // const bencoded = "d4:listli1ei2ed6:nestedi1eee3:food2:hii5ee5:helloi52ee";
+
+    expect(decoder.decode(bencoded)).toEqual({
+      list: [
+        1, 2,
+        // {
+        //   nested: 1,
+        // },
+      ],
+      foo: {
+        hi: 5,
+      },
+      hello: 52,
+    });
+  });
 });

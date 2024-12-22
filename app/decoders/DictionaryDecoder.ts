@@ -44,7 +44,45 @@ export class DictionaryDecoder implements Decoder {
       bencodedValue.slice(offset + 2),
     ];
   }
+
+  validate(bencodedValue: string): boolean {
+    return (
+      bencodedValue[0] === "d" &&
+      bencodedValue[bencodedValue.length - 1] === "e"
+    );
+  }
+
   decode(bencodedValue: string): unknown {
-    throw new Error("Method not implemented.");
+    if (!this.validate(bencodedValue)) {
+      throw new Error(
+        "Invalid dictionary encoding format. Dictionary encoded values should start with 'd' followed by the key value pairs and ending with 'e'",
+        { cause: bencodedValue }
+      );
+    }
+
+    return this.recurse(bencodedValue.slice(1, bencodedValue.length - 1));
+  }
+
+  recurse(bencodedValue: string): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+
+    const [encodedKey, rest] = this.keyDecoder.takeNext(bencodedValue);
+
+    const valueDecoder = this.valueDecoders.find((dec) => dec.match(rest));
+
+    if (!valueDecoder) {
+      throw new Error("Unsupported value format", { cause: rest });
+    }
+
+    const [encodedValue, remaining] = valueDecoder.takeNext(rest);
+
+    result[this.keyDecoder.decode(encodedKey)] =
+      valueDecoder.decode(encodedValue);
+
+    if (remaining) {
+      Object.assign(result, this.recurse(remaining));
+    }
+
+    return result;
   }
 }
