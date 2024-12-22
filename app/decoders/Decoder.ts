@@ -1,5 +1,5 @@
 export interface Decoder {
-  match(benecodedValue: string): boolean;
-  takeNext(beencodedValue: string): [string, string];
-  decode(benecodedValue: string): unknown;
+  match(bencodedValue: string): boolean;
+  takeNext(bencodedValue: string): [string, string];
+  decode(bencodedValue: string): unknown;
 }
