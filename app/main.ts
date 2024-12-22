@@ -32,7 +32,7 @@ export async function info(filePath: string) {
   const torrentInfo = dictionaryDecoder.decode(file);
 
   console.log(`Tracker URL: ${torrentInfo.announce}`);
-  console.log(`Length: ${torrentInfo.info["piece length"]}`);
+  console.log(`Length: ${torrentInfo.info.length}`);
 }
 
 const args = process.argv;
