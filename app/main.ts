@@ -2,16 +2,18 @@
 // - decodeBencode("5:hello") -> "hello"
 // - decodeBencode("10:hello12345") -> "hello12345"
 
+import { DictionaryDecoder } from "./decoders/DictionaryDecoder";
 import { IntegerDecoder } from "./decoders/IntegerDecoder";
 import { ListDecoder } from "./decoders/ListDecoder";
 import { StringDecoder } from "./decoders/StringDecoder";
 
 export function decodeBencode(bencodedValue: string) {
-  const intDecoder = new IntegerDecoder();
-  const stringDecoder = new StringDecoder();
-  const listDecoder = new ListDecoder();
-
-  const decoders = [stringDecoder, intDecoder, listDecoder];
+  const decoders = [
+    new StringDecoder(),
+    new IntegerDecoder(),
+    new ListDecoder(),
+    new DictionaryDecoder(),
+  ];
 
   const decoder = decoders.find((decoder) => decoder.match(bencodedValue));
 
