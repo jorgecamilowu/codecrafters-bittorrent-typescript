@@ -29,7 +29,10 @@ export function decodeBencode(bencodedValue: string) {
 export async function info(filePath: string) {
   const file = await Bun.file(filePath).text();
 
-  const torrentInfo = dictionaryDecoder.decode(file);
+  const torrentInfo = dictionaryDecoder.decode(file) as {
+    announce: string;
+    info: { length: string };
+  };
 
   console.log(`Tracker URL: ${torrentInfo.announce}`);
   console.log(`Length: ${torrentInfo.info.length}`);
