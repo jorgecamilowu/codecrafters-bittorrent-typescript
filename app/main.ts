@@ -6,6 +6,7 @@ import { DictionaryDecoder } from "./decoders/DictionaryDecoder";
 import { IntegerDecoder } from "./decoders/IntegerDecoder";
 import { ListDecoder } from "./decoders/ListDecoder";
 import { StringDecoder } from "./decoders/StringDecoder";
+import fs from "fs";
 
 const dictionaryDecoder = new DictionaryDecoder();
 
@@ -27,7 +28,7 @@ export function decodeBencode(bencodedValue: string) {
 }
 
 export async function info(filePath: string) {
-  const file = await Bun.file(filePath).text();
+  const file = fs.readFileSync(filePath).toString("binary");
 
   const torrentInfo = dictionaryDecoder.decode(file) as {
     announce: string;
@@ -39,9 +40,9 @@ export async function info(filePath: string) {
 }
 
 const args = process.argv;
-const bencodedValue = args[3];
 
 if (args[2] === "decode") {
+  const bencodedValue = args[3];
   // You can use print statements as follows for debugging, they'll be visible when running tests.
   console.error("Logs from your program will appear here!");
 
@@ -55,5 +56,6 @@ if (args[2] === "decode") {
     }
   }
 } else if (args[2] === "info") {
-  info(bencodedValue);
+  const torrentFilePath = args[3];
+  info(torrentFilePath);
 }
