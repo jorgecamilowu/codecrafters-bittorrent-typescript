@@ -1,4 +1,4 @@
-import type { Bencoded } from "./Readable";
+import type { Bencoded } from "./Bencoded";
 
 export class StringBencoded implements Bencoded {
   private colonPosition: number;
