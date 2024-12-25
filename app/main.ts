@@ -3,7 +3,7 @@
 // - decodeBencode("10:hello12345") -> "hello12345"
 
 import fs from "fs";
-import { toBenecoded } from "./values/BencodedIterator";
+import { toBenecoded } from "./values/Bencoded";
 import { DictionaryBencoded } from "./values/DictionaryBencoded";
 
 export function decodeBencode(bencodedValue: string) {
