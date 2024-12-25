@@ -1,0 +1,47 @@
+import { BencodedIterator } from "../BencodedIterator";
+import type { DictionaryBencoded } from "../DictionaryBencoded";
+import type { Decoder } from "./Decoder";
+
+export class DictionaryDecoder implements Decoder {
+  constructor(private bencoded: DictionaryBencoded) {}
+
+  decode(): Record<string, unknown> {
+    const { value } = this.bencoded;
+    const body = value.slice(1, value.length - 1);
+
+    if (body === "") {
+      return {};
+    }
+
+    return this.recurse(body);
+  }
+
+  private recurse(bencodedValue: string): Record<string, unknown> {
+    const decodedValues: Record<string, unknown> = {};
+
+    const iter = new BencodedIterator(bencodedValue);
+
+    const encodedKey = iter.next();
+
+    if (encodedKey === undefined) {
+      return decodedValues;
+    }
+
+    const encodedValue = iter.next();
+
+    if (encodedValue === undefined) {
+      return decodedValues;
+    }
+
+    decodedValues[encodedKey.decoder.decode() as string] =
+      encodedValue.decoder.decode();
+
+    const rest = iter.rest();
+
+    if (rest) {
+      Object.assign(decodedValues, this.recurse(rest));
+    }
+
+    return decodedValues;
+  }
+}

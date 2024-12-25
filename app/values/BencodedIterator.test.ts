@@ -8,17 +8,17 @@ describe("Bencoded Iterator", () => {
   it("iterates", () => {
     const iterator = new BencodedIterator(bencoded);
 
-    expect(iterator.next().value).toBe(
+    expect(iterator.next()?.value).toBe(
       "55:http://bittorrent-test-tracker.codecrafters.io/announce"
     );
-    expect(iterator.next().value).toBe("i88888e");
-    expect(iterator.next().value).toBe("5:hello");
-    expect(iterator.next().value).toBe("2:hi");
-    expect(iterator.next().value).toBe("i8883e");
-    expect(iterator.next().value).toBe("0:");
-    expect(iterator.next().value).toBe("i23e");
-    expect(iterator.next().value).toBe("li44ei55ee");
-    expect(iterator.next().value).toBe("d3:food2:hii5ee5:helloi52ee");
-    expect(iterator.next().value).toBe("");
+    expect(iterator.next()?.value).toBe("i88888e");
+    expect(iterator.next()?.value).toBe("5:hello");
+    expect(iterator.next()?.value).toBe("2:hi");
+    expect(iterator.next()?.value).toBe("i8883e");
+    expect(iterator.next()?.value).toBe("0:");
+    expect(iterator.next()?.value).toBe("i23e");
+    expect(iterator.next()?.value).toBe("li44ei55ee");
+    expect(iterator.next()?.value).toBe("d3:food2:hii5ee5:helloi52ee");
+    expect(iterator.next()?.value).toBeUndefined();
   });
 });

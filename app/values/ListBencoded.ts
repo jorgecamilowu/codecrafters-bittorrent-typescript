@@ -1,3 +1,4 @@
+import { ListDecoder } from "./decoders/ListDecoder";
 import type { Bencoded } from "./Bencoded";
 import { BencodedIterator } from "./BencodedIterator";
 
@@ -30,10 +31,19 @@ export class ListBencoded implements Bencoded {
 
       const iterator = new BencodedIterator(offseted);
 
-      const next = iterator.next().value;
-      offset += next.length;
+      const next = iterator.next();
+
+      if (next === undefined) {
+        break;
+      }
+
+      offset += next.value.length;
     }
 
     return this.bencodedValue.slice(0, offset + 2);
+  }
+
+  get decoder() {
+    return new ListDecoder(this);
   }
 }

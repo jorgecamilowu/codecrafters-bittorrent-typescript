@@ -29,6 +29,7 @@ export class IntegerBencoded implements Bencoded {
   }
 
   get decoder() {
+    // temp
     return new IntegerDecoder(this);
   }
 }

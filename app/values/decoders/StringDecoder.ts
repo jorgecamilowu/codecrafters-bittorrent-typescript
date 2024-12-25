@@ -1,6 +1,7 @@
 import type { StringBencoded } from "../StringBencoded";
+import type { Decoder } from "./Decoder";
 
-export class StringDecoder {
+export class StringDecoder implements Decoder {
   constructor(private bencoded: StringBencoded) {}
 
   decode(): string {

@@ -8,21 +8,25 @@ export class BencodedIterator {
   private position = 0;
   constructor(private rawBencoded: string) {}
 
-  next(): Bencoded {
+  next(): Bencoded | undefined {
     const bencoded = this.makeBencoded();
+
+    if (bencoded === undefined) return bencoded;
 
     this.position += bencoded.value.length;
 
     return bencoded;
   }
 
-  private makeBencoded(): Bencoded {
+  rest(): string {
+    return this.rawBencoded.slice(this.position);
+  }
+
+  private makeBencoded(): Bencoded | undefined {
     const ref = this.rawBencoded.slice(this.position);
 
     if (ref === "") {
-      return {
-        value: "",
-      };
+      return undefined;
     }
 
     if (StringBencoded.match(ref)) {
