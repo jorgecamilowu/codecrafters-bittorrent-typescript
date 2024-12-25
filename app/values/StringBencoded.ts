@@ -1,4 +1,5 @@
 import type { Bencoded } from "./Bencoded";
+import { StringDecoder } from "./decoders/StringDecoder";
 
 export class StringBencoded implements Bencoded {
   private colonPosition: number;
@@ -15,5 +16,9 @@ export class StringBencoded implements Bencoded {
 
   get value() {
     return this.bencodedValue.slice(0, this.length + this.colonPosition + 1);
+  }
+
+  get decoder() {
+    return new StringDecoder(this);
   }
 }

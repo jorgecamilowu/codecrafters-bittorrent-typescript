@@ -16,4 +16,10 @@ describe("String Bencoded", () => {
     const stringBencoded = new StringBencoded("0:i23e");
     expect(stringBencoded.value).toBe("0:");
   });
+
+  it("decodes the current string value", () => {
+    expect(stringBencoded.decoder.decode()).toBe(
+      "http://bittorrent-test-tracker.codecrafters.io/announce"
+    );
+  });
 });
