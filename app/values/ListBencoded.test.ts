@@ -8,4 +8,10 @@ describe("List Bencoded", () => {
 
     expect(l.value).toBe("lli23e2:hii8eee");
   });
+
+  it("throws error when constructing with a non-list bencoded value", () => {
+    expect(() => new ListBencoded("2:hi")).toThrow(
+      "Invalid list bencoded format!"
+    );
+  });
 });

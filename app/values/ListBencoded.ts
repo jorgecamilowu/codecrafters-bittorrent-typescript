@@ -2,10 +2,18 @@ import type { Bencoded } from "./Bencoded";
 import { BencodedIterator } from "./BencodedIterator";
 
 export class ListBencoded implements Bencoded {
-  constructor(private bencodedValue: string) {}
+  constructor(private bencodedValue: string) {
+    if (!this.validate()) {
+      throw new Error("Invalid list bencoded format!");
+    }
+  }
 
   static match(bencodedValue: string): boolean {
     return bencodedValue[0] === "l";
+  }
+
+  private validate(): boolean {
+    return this.bencodedValue[0] === "l";
   }
 
   get value() {
