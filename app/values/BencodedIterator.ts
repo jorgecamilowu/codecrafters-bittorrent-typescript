@@ -5,7 +5,7 @@ export class BencodedIterator {
   constructor(private rawBencoded: string) {}
 
   next(): Bencoded | undefined {
-    const ref = this.rawBencoded.slice(this.position);
+    const ref = this.rest();
 
     if (ref === "") {
       return undefined;

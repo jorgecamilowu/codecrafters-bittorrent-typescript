@@ -22,14 +22,9 @@ export class DictionaryDecoder implements Decoder {
     const iter = new BencodedIterator(bencodedValue);
 
     const encodedKey = iter.next();
-
-    if (encodedKey === undefined) {
-      return decodedValues;
-    }
-
     const encodedValue = iter.next();
 
-    if (encodedValue === undefined) {
+    if (!encodedKey || !encodedValue) {
       return decodedValues;
     }
 
