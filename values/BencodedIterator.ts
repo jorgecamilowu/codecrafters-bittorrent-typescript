@@ -1,5 +1,6 @@
 import type { Bencoded } from "./Bencoded";
 import { IntegerBencoded } from "./IntegerBencoded";
+import { ListBencoded } from "./ListBencoded";
 import { StringBencoded } from "./StringBencoded";
 
 export class BencodedIterator {
@@ -29,6 +30,10 @@ export class BencodedIterator {
 
     if (IntegerBencoded.match(ref)) {
       return new IntegerBencoded(ref);
+    }
+
+    if (ListBencoded.match(ref)) {
+      return new ListBencoded(ref);
     }
 
     throw new Error("Attempt to iterate on unsupported format!");
