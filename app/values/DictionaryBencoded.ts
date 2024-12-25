@@ -2,10 +2,18 @@ import type { Bencoded } from "./Bencoded";
 import { BencodedIterator } from "./BencodedIterator";
 
 export class DictionaryBencoded implements Bencoded {
-  constructor(private bencodedValue: string) {}
+  constructor(private bencodedValue: string) {
+    if (!this.validate()) {
+      throw new Error("Invalid dictionary bencoded format!");
+    }
+  }
 
   static match(bencodedValue: string): boolean {
     return bencodedValue[0] === "d";
+  }
+
+  private validate(): boolean {
+    return this.bencodedValue[0] === "d";
   }
 
   get value() {
