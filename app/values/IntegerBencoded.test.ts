@@ -1,5 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { IntegerBencoded } from "./IntegerBencoded";
+import { IntegerDecoder } from "./decoders/IntegerDecoder";
 
 describe("Integer Bencoded", () => {
   const raw =
@@ -24,5 +25,11 @@ describe("Integer Bencoded", () => {
 
   it("reads the current int bencoded value", () => {
     expect(intBencoded.value).toBe("i88888e");
+  });
+
+  it("returns an IntegerDecoder", () => {
+    const { decoder } = intBencoded;
+
+    expect(decoder).toBeInstanceOf(IntegerDecoder);
   });
 });

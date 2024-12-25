@@ -1,4 +1,5 @@
 import type { Bencoded } from "./Bencoded";
+import { IntegerDecoder } from "./decoders/IntegerDecoder";
 
 export class IntegerBencoded implements Bencoded {
   private lastIndex: number;
@@ -25,5 +26,9 @@ export class IntegerBencoded implements Bencoded {
 
   get value() {
     return this.bencodedValue.slice(0, this.lastIndex + 1);
+  }
+
+  get decoder() {
+    return new IntegerDecoder(this);
   }
 }
