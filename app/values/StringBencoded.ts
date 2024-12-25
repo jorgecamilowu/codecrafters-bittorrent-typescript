@@ -19,7 +19,7 @@ export class StringBencoded implements Bencoded {
   }
 
   private validate() {
-    return this.bencodedValue.indexOf(":") !== -1;
+    return StringBencoded.match(this.bencodedValue);
   }
 
   get value() {

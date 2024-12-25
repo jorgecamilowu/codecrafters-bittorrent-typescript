@@ -21,7 +21,7 @@ export class IntegerBencoded implements Bencoded {
   }
 
   private validate() {
-    return this.bencodedValue[0] === "i";
+    return IntegerBencoded.match(this.bencodedValue);
   }
 
   get value() {

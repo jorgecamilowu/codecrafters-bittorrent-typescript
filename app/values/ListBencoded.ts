@@ -14,7 +14,7 @@ export class ListBencoded implements Bencoded {
   }
 
   private validate(): boolean {
-    return this.bencodedValue[0] === "l";
+    return ListBencoded.match(this.bencodedValue);
   }
 
   get value() {

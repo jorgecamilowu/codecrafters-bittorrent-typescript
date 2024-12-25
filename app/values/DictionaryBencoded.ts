@@ -13,7 +13,7 @@ export class DictionaryBencoded implements Bencoded {
   }
 
   private validate(): boolean {
-    return this.bencodedValue[0] === "d";
+    return DictionaryBencoded.match(this.bencodedValue);
   }
 
   get value() {
