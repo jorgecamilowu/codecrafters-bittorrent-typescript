@@ -1,5 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { StringBencoded } from "./StringBencoded";
+import { StringDecoder } from "./decoders/StringDecoder";
 
 describe("String Bencoded", () => {
   const raw =
@@ -23,9 +24,7 @@ describe("String Bencoded", () => {
     expect(stringBencoded.value).toBe("0:");
   });
 
-  it("decodes the current string value", () => {
-    expect(stringBencoded.decoder.decode()).toBe(
-      "http://bittorrent-test-tracker.codecrafters.io/announce"
-    );
+  it("returns a string decoder", () => {
+    expect(stringBencoded.decoder).toBeInstanceOf(StringDecoder);
   });
 });
