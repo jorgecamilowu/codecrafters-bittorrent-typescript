@@ -31,7 +31,7 @@ export class DictionaryDecoder implements Decoder {
     decodedValues[encodedKey.decoder.decode() as string] =
       encodedValue.decoder.decode();
 
-    const rest = iter.rest();
+    const rest = iter.unwrap();
 
     if (rest) {
       Object.assign(decodedValues, this.recurse(rest));

@@ -1,11 +1,14 @@
 import { toBenecoded, type Bencoded } from "./Bencoded";
 
 export class BencodedIterator {
-  private position = 0;
+  private cursor = 0;
   constructor(private rawBencoded: string) {}
 
+  /**
+   * @returns the next Bencoded value in the iterator
+   */
   next(): Bencoded | undefined {
-    const ref = this.rest();
+    const ref = this.unwrap();
 
     if (ref === "") {
       return undefined;
@@ -15,12 +18,15 @@ export class BencodedIterator {
 
     if (bencoded === undefined) return bencoded;
 
-    this.position += bencoded.value.length;
+    this.cursor += bencoded.value.length;
 
     return bencoded;
   }
 
-  rest(): string {
-    return this.rawBencoded.slice(this.position);
+  /**
+   * @returns the raw bencoded value at the current cursor of the iterator
+   */
+  unwrap(): string {
+    return this.rawBencoded.slice(this.cursor);
   }
 }

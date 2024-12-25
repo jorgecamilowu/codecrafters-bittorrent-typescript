@@ -31,7 +31,7 @@ export class ListDecoder implements Decoder {
 
     decodedValues.push(decoded);
 
-    const rest = iter.rest();
+    const rest = iter.unwrap();
 
     if (rest) {
       decodedValues.push(...this.recurse(rest));
