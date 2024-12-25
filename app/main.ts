@@ -9,7 +9,7 @@ import { DictionaryBencoded } from "./values/DictionaryBencoded";
 export function decodeBencode(bencodedValue: string) {
   const bencoded = toBenecoded(bencodedValue);
 
-  return bencoded?.decoder.decode();
+  return bencoded.decoder.decode();
 }
 
 export async function info(filePath: string) {

@@ -25,5 +25,5 @@ export function toBenecoded(bencoded: string) {
     return new DictionaryBencoded(bencoded);
   }
 
-  throw new Error("Attempt to iterate on unsupported format!");
+  throw new Error("Unsupported bencoding format!");
 }
