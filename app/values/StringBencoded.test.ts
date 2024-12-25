@@ -6,6 +6,12 @@ describe("String Bencoded", () => {
     "55:http://bittorrent-test-tracker.codecrafters.io/announcei88888e";
   const stringBencoded = new StringBencoded(raw);
 
+  it("throws error when constructing with a non-string bencoded value", () => {
+    expect(() => new StringBencoded("i23e")).toThrow(
+      "Invalid string bencoded format!"
+    );
+  });
+
   it("reads the current string bencoded value", () => {
     expect(stringBencoded.value).toBe(
       "55:http://bittorrent-test-tracker.codecrafters.io/announce"

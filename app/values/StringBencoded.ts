@@ -6,12 +6,20 @@ export class StringBencoded implements Bencoded {
   private length: number;
 
   constructor(private readonly bencodedValue: string) {
+    if (!this.validate()) {
+      throw new Error("Invalid string bencoded format!");
+    }
+
     this.colonPosition = this.bencodedValue.indexOf(":");
     this.length = parseInt(this.bencodedValue.slice(0, this.colonPosition));
   }
 
   static match(bencodedValue: string): boolean {
     return !isNaN(parseInt(bencodedValue[0]));
+  }
+
+  private validate() {
+    return this.bencodedValue.indexOf(":") !== -1;
   }
 
   get value() {
