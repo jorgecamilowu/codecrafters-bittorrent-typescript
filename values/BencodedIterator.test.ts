@@ -3,7 +3,7 @@ import { BencodedIterator } from "./BencodedIterator";
 
 describe("Bencoded Iterator", () => {
   const bencoded =
-    "55:http://bittorrent-test-tracker.codecrafters.io/announcei88888e5:hello2:hii8883e0:i23eli44ei55ee";
+    "55:http://bittorrent-test-tracker.codecrafters.io/announcei88888e5:hello2:hii8883e0:i23eli44ei55eed3:food2:hii5ee5:helloi52ee";
 
   it("iterates", () => {
     const iterator = new BencodedIterator(bencoded);
@@ -18,6 +18,7 @@ describe("Bencoded Iterator", () => {
     expect(iterator.next().value).toBe("0:");
     expect(iterator.next().value).toBe("i23e");
     expect(iterator.next().value).toBe("li44ei55ee");
+    expect(iterator.next().value).toBe("d3:food2:hii5ee5:helloi52ee");
     expect(iterator.next().value).toBe("");
   });
 });

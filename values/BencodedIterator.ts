@@ -1,4 +1,5 @@
 import type { Bencoded } from "./Bencoded";
+import { DictionaryBencoded } from "./DictionaryBencoded";
 import { IntegerBencoded } from "./IntegerBencoded";
 import { ListBencoded } from "./ListBencoded";
 import { StringBencoded } from "./StringBencoded";
@@ -34,6 +35,10 @@ export class BencodedIterator {
 
     if (ListBencoded.match(ref)) {
       return new ListBencoded(ref);
+    }
+
+    if (DictionaryBencoded.match(ref)) {
+      return new DictionaryBencoded(ref);
     }
 
     throw new Error("Attempt to iterate on unsupported format!");
