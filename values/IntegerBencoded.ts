@@ -18,6 +18,10 @@ export class IntegerBencoded implements Bencoded {
     }
   }
 
+  static match(bencodedValue: string): boolean {
+    return bencodedValue[0] === "i";
+  }
+
   get value() {
     return this.bencodedValue.slice(0, this.lastIndex + 1);
   }

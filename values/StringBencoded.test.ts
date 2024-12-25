@@ -11,4 +11,9 @@ describe("String Bencoded", () => {
       "55:http://bittorrent-test-tracker.codecrafters.io/announce"
     );
   });
+
+  it("reads empty string values", () => {
+    const stringBencoded = new StringBencoded("0:i23e");
+    expect(stringBencoded.value).toBe("0:");
+  });
 });

@@ -9,6 +9,10 @@ export class StringBencoded implements Bencoded {
     this.length = parseInt(this.bencodedValue.slice(0, this.colonPosition));
   }
 
+  static match(bencodedValue: string): boolean {
+    return !isNaN(parseInt(bencodedValue[0]));
+  }
+
   get value() {
     return this.bencodedValue.slice(0, this.length + this.colonPosition + 1);
   }
