@@ -1,6 +1,6 @@
 import type { Bencoded } from "./Bencoded";
 import { BencodedIterator } from "./BencodedIterator";
-import { DictionaryDecoder } from "./decoders/DictionaryDecoder";
+import { DictionaryDecoder } from "../decoders/DictionaryDecoder";
 
 export class DictionaryBencoded implements Bencoded {
   constructor(private bencodedValue: string) {

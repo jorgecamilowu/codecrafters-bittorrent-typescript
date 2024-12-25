@@ -1,4 +1,4 @@
-import type { Decoder } from "./decoders/Decoder";
+import type { Decoder } from "../decoders/Decoder";
 
 export interface Bencoded {
   value: string;

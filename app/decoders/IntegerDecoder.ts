@@ -1,46 +1,13 @@
+import type { IntegerBencoded } from "../values/IntegerBencoded";
 import type { Decoder } from "./Decoder";
 
 export class IntegerDecoder implements Decoder {
-  takeNext(bencodedValue: string): [string, string] {
-    const nextEnding = bencodedValue.indexOf("e");
+  constructor(private bencoded: IntegerBencoded) {}
 
-    if (nextEnding === -1) {
-      throw new Error(
-        "No ending 'e' found for the current integer encoded value",
-        {
-          cause: {
-            bencodedValue,
-          },
-        }
-      );
-    }
+  decode(): number {
+    const { value } = this.bencoded;
 
-    return [
-      bencodedValue.slice(0, nextEnding + 1),
-      bencodedValue.slice(nextEnding + 1),
-    ];
-  }
-  private validateBenecodedValue(bencodedValue: string) {
-    return (
-      bencodedValue.length >= 2 &&
-      bencodedValue[0] === "i" &&
-      bencodedValue[bencodedValue.length - 1] === "e"
-    );
-  }
-
-  decode(bencodedValue: string): number {
-    if (!this.validateBenecodedValue(bencodedValue)) {
-      throw new Error(
-        "Invalid integer encoding format. Integer encoded values should start with 'i' followed by the integer value and end with 'e'",
-        {
-          cause: {
-            bencodedValue,
-          },
-        }
-      );
-    }
-
-    const stringInt = bencodedValue.slice(1, bencodedValue.length - 1);
+    const stringInt = value.slice(1, value.length - 1);
 
     if (stringInt === "") {
       return 0;
@@ -50,14 +17,10 @@ export class IntegerDecoder implements Decoder {
 
     if (isNaN(output)) {
       throw new Error("Could not parse out value", {
-        cause: { bencodedValue: bencodedValue },
+        cause: { bencodedValue: this.bencoded },
       });
     }
 
     return output;
-  }
-
-  match(bencoded: string): boolean {
-    return bencoded[0] === "i";
   }
 }

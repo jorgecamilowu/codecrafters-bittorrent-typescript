@@ -1,5 +1,5 @@
 import type { Bencoded } from "./Bencoded";
-import { StringDecoder } from "./decoders/StringDecoder";
+import { StringDecoder } from "../decoders/StringDecoder";
 
 export class StringBencoded implements Bencoded {
   private colonPosition: number;

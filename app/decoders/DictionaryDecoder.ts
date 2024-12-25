@@ -1,92 +1,47 @@
+import { BencodedIterator } from "../values/BencodedIterator";
+import type { DictionaryBencoded } from "../values/DictionaryBencoded";
 import type { Decoder } from "./Decoder";
-import { IntegerDecoder } from "./IntegerDecoder";
-import { ListDecoder } from "./ListDecoder";
-import { StringDecoder } from "./StringDecoder";
 
 export class DictionaryDecoder implements Decoder {
-  private keyDecoder: StringDecoder;
-  private valueDecoders: Decoder[];
+  constructor(private bencoded: DictionaryBencoded) {}
 
-  constructor() {
-    this.keyDecoder = new StringDecoder();
-    this.valueDecoders = [
-      new IntegerDecoder(),
-      new StringDecoder(),
-      new ListDecoder(),
-      this,
-    ];
-  }
+  decode(): Record<string, unknown> {
+    const { value } = this.bencoded;
+    const body = value.slice(1, value.length - 1);
 
-  match(bencodedValue: string): boolean {
-    return bencodedValue[0] === "d";
-  }
-  takeNext(bencodedValue: string): [string, string] {
-    const withoutPrefix = bencodedValue.slice(1);
-    let offset = 0;
-
-    while (offset < bencodedValue.length) {
-      if (withoutPrefix[offset] === "e") {
-        break;
-      }
-
-      const offseted = withoutPrefix.slice(offset);
-
-      const decoder = this.valueDecoders.find((dec) => dec.match(offseted));
-
-      if (decoder) {
-        const [next] = decoder.takeNext(offseted);
-        offset += next.length;
-      }
-    }
-
-    return [
-      bencodedValue.slice(0, offset + 2),
-      bencodedValue.slice(offset + 2),
-    ];
-  }
-
-  validate(bencodedValue: string): boolean {
-    return (
-      bencodedValue[0] === "d" &&
-      bencodedValue[bencodedValue.length - 1] === "e"
-    );
-  }
-
-  decode(bencodedValue: string): Record<string, unknown> {
-    if (!this.validate(bencodedValue)) {
-      throw new Error(
-        "Invalid dictionary encoding format. Dictionary encoded values should start with 'd' followed by the key value pairs and ending with 'e'",
-        { cause: bencodedValue }
-      );
-    }
-
-    return this.recurse(bencodedValue.slice(1, bencodedValue.length - 1));
-  }
-
-  recurse(bencodedValue: string): Record<string, unknown> {
-    if (bencodedValue === "") {
+    if (body === "") {
       return {};
     }
 
-    const result: Record<string, unknown> = {};
+    return this.recurse(body);
+  }
 
-    const [encodedKey, rest] = this.keyDecoder.takeNext(bencodedValue);
+  private recurse(bencodedValue: string): Record<string, unknown> {
+    const decodedValues: Record<string, unknown> = {};
 
-    const valueDecoder = this.valueDecoders.find((dec) => dec.match(rest));
+    const iter = new BencodedIterator(bencodedValue);
 
-    if (!valueDecoder) {
-      throw new Error("Unsupported value format", { cause: rest });
+    const encodedKey = iter.next();
+
+    if (encodedKey === undefined) {
+      return decodedValues;
     }
 
-    const [encodedValue, remaining] = valueDecoder.takeNext(rest);
+    const encodedValue = iter.next();
 
-    result[this.keyDecoder.decode(encodedKey)] =
-      valueDecoder.decode(encodedValue);
-
-    if (remaining) {
-      Object.assign(result, this.recurse(remaining));
+    if (encodedValue === undefined) {
+      return decodedValues;
     }
 
-    return result;
+    decodedValues[encodedKey.decoder.decode() as string] =
+      encodedValue.decoder.decode();
+
+    const rest = iter.rest();
+
+    if (rest) {
+      Object.assign(decodedValues, this.recurse(rest));
+    }
+
+    return decodedValues;
   }
 }

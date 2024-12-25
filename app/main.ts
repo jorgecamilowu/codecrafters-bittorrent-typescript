@@ -2,35 +2,20 @@
 // - decodeBencode("5:hello") -> "hello"
 // - decodeBencode("10:hello12345") -> "hello12345"
 
-import { DictionaryDecoder } from "./decoders/DictionaryDecoder";
-import { IntegerDecoder } from "./decoders/IntegerDecoder";
-import { ListDecoder } from "./decoders/ListDecoder";
-import { StringDecoder } from "./decoders/StringDecoder";
 import fs from "fs";
-
-const dictionaryDecoder = new DictionaryDecoder();
-
-const decoders = [
-  new StringDecoder(),
-  new IntegerDecoder(),
-  new ListDecoder(),
-  dictionaryDecoder,
-];
+import { toBenecoded } from "./values/BencodedIterator";
+import { DictionaryBencoded } from "./values/DictionaryBencoded";
 
 export function decodeBencode(bencodedValue: string) {
-  const decoder = decoders.find((decoder) => decoder.match(bencodedValue));
+  const bencoded = toBenecoded(bencodedValue);
 
-  if (!decoder) {
-    throw new Error("Unsupported format!");
-  }
-
-  return decoder.decode(bencodedValue);
+  return bencoded?.decoder.decode();
 }
 
 export async function info(filePath: string) {
   const file = fs.readFileSync(filePath).toString("binary");
 
-  const torrentInfo = dictionaryDecoder.decode(file) as {
+  const torrentInfo = new DictionaryBencoded(file).decoder.decode() as {
     announce: string;
     info: { length: string };
   };

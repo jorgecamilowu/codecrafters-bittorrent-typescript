@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { StringBencoded } from "./StringBencoded";
-import { StringDecoder } from "./decoders/StringDecoder";
+import { StringDecoder } from "../decoders/StringDecoder";
 
 describe("String Bencoded", () => {
   const raw =

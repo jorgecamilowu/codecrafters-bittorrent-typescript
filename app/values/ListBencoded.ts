@@ -1,4 +1,4 @@
-import { ListDecoder } from "./decoders/ListDecoder";
+import { ListDecoder } from "../decoders/ListDecoder";
 import type { Bencoded } from "./Bencoded";
 import { BencodedIterator } from "./BencodedIterator";
 

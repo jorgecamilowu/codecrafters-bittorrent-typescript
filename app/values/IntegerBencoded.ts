@@ -1,5 +1,5 @@
 import type { Bencoded } from "./Bencoded";
-import { IntegerDecoder } from "./decoders/IntegerDecoder";
+import { IntegerDecoder } from "../decoders/IntegerDecoder";
 
 export class IntegerBencoded implements Bencoded {
   private lastIndex: number;
