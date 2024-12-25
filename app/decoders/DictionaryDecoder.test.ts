@@ -21,4 +21,10 @@ describe("Dictionary Decoder", () => {
       hello: 52,
     });
   });
+
+  it("decodes an empty dictionary", () => {
+    const encoded = new DictionaryBencoded("de");
+
+    expect(encoded.decoder.decode()).toEqual({});
+  });
 });

@@ -9,4 +9,15 @@ describe("Integer decoder", () => {
 
     expect(decoder.decode()).toBe(88888);
   });
+
+  it("decodes falsy integers", () => {
+    let decoder = new IntegerDecoder(new IntegerBencoded("ie"));
+    expect(decoder.decode()).toBe(0);
+
+    decoder = new IntegerDecoder(new IntegerBencoded("i0e"));
+    expect(decoder.decode()).toBe(0);
+
+    decoder = new IntegerDecoder(new IntegerBencoded("i0000e"));
+    expect(decoder.decode()).toBe(0);
+  });
 });

@@ -9,4 +9,10 @@ describe("List decoder", () => {
 
     expect(decoder.decode()).toEqual([[[869, "banana"]], ["hello", 99]]);
   });
+
+  it("decodes an empty list", () => {
+    const decoder = new ListDecoder(new ListBencoded("le"));
+
+    expect(decoder.decode()).toEqual([]);
+  });
 });
