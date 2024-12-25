@@ -6,20 +6,21 @@ export class IntegerBencoded implements Bencoded {
   constructor(private bencodedValue: string) {
     this.lastIndex = this.bencodedValue.indexOf("e");
 
-    if (this.lastIndex === -1) {
-      throw new Error(
-        "No ending 'e' found for the current integer encoded value",
-        {
-          cause: {
-            bencodedValue,
-          },
-        }
-      );
+    if (!this.validate() || this.lastIndex === -1) {
+      throw new Error("Invalid integer bencoded format!", {
+        cause: {
+          bencodedValue,
+        },
+      });
     }
   }
 
   static match(bencodedValue: string): boolean {
     return bencodedValue[0] === "i";
+  }
+
+  private validate() {
+    return this.bencodedValue[0] === "i";
   }
 
   get value() {
