@@ -38,6 +38,7 @@ function info(filePath: string) {
   console.log(`Length: ${torrent.info.length}`);
   console.log(`Info Hash: ${hashed}`);
   console.log(`Piece Length: ${torrent.info["piece length"]}`);
+  console.log("Piece Hashes:");
 
   const iter = new ByteIterator(torrent.info.pieces);
 
