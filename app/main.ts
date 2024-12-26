@@ -5,6 +5,7 @@
 import fs from "fs";
 import { toBenecoded } from "./values/Bencoded";
 import { DictionaryBencoded } from "./values/DictionaryBencoded";
+import { DictionaryEncoder } from "./encoders/DictionaryEncoder";
 
 export function decodeBencode(bencodedValue: string) {
   const bencoded = toBenecoded(bencodedValue);
@@ -20,10 +21,16 @@ export async function info(filePath: string) {
     info: { length: string };
   };
 
-  console.log(torrentInfo);
-
   console.log(`Tracker URL: ${torrentInfo.announce}`);
   console.log(`Length: ${torrentInfo.info.length}`);
+
+  const bencodedInfo = new DictionaryEncoder().encode(torrentInfo.info);
+
+  const hashed = new Bun.CryptoHasher("sha1", bencodedInfo)
+    .digest()
+    .toString("hex");
+
+  console.log(`Info Hash: ${hashed}`);
 }
 
 const args = process.argv;
