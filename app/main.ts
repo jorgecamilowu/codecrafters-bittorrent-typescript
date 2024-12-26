@@ -6,6 +6,7 @@ import fs from "fs";
 import { toBenecoded } from "./values/Bencoded";
 import { DictionaryBencoded } from "./values/DictionaryBencoded";
 import { DictionaryEncoder } from "./encoders/DictionaryEncoder";
+import { ByteIterator } from "./ByteIterator";
 
 export function decodeBencode(bencodedValue: string) {
   const bencoded = toBenecoded(bencodedValue);
@@ -13,24 +14,39 @@ export function decodeBencode(bencodedValue: string) {
   return bencoded.decoder.decode();
 }
 
-export async function info(filePath: string) {
+function toHex(array: Uint8Array) {
+  return array.reduce((acc, curr) => {
+    return (acc += curr.toString(16).padStart(2, "0"));
+  }, "");
+}
+
+function info(filePath: string) {
   const file = fs.readFileSync(filePath).toString("binary");
 
-  const torrentInfo = new DictionaryBencoded(file).decoder.decode() as {
+  const torrent = new DictionaryBencoded(file).decoder.decode() as {
     announce: string;
-    info: { length: string };
+    info: { length: string; ["piece length"]: number; pieces: string };
   };
 
-  console.log(`Tracker URL: ${torrentInfo.announce}`);
-  console.log(`Length: ${torrentInfo.info.length}`);
-
-  const bencodedInfo = new DictionaryEncoder().encode(torrentInfo.info);
+  const bencodedInfo = new DictionaryEncoder().encode(torrent.info);
 
   const hashed = new Bun.CryptoHasher("sha1")
     .update(bencodedInfo, "binary")
     .digest("hex");
 
+  console.log(`Tracker URL: ${torrent.announce}`);
+  console.log(`Length: ${torrent.info.length}`);
   console.log(`Info Hash: ${hashed}`);
+  console.log(`Piece Length: ${torrent.info["piece length"]}`);
+
+  const iter = new ByteIterator(torrent.info.pieces);
+
+  let piece = iter.next(20);
+  while (piece) {
+    console.log(toHex(piece));
+
+    piece = iter.next(20);
+  }
 }
 
 const args = process.argv;
