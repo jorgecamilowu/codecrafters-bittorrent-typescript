@@ -26,7 +26,9 @@ export async function info(filePath: string) {
 
   const bencodedInfo = new DictionaryEncoder().encode(torrentInfo.info);
 
-  const hashed = new Bun.CryptoHasher("sha1", bencodedInfo).digest("hex");
+  const hashed = new Bun.CryptoHasher("sha1")
+    .update(bencodedInfo, "binary")
+    .digest("hex");
 
   console.log(`Info Hash: ${hashed}`);
 }
