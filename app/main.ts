@@ -20,6 +20,8 @@ export async function info(filePath: string) {
     info: { length: string };
   };
 
+  console.log(torrentInfo);
+
   console.log(`Tracker URL: ${torrentInfo.announce}`);
   console.log(`Length: ${torrentInfo.info.length}`);
 }
