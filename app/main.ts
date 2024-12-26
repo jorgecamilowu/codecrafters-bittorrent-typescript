@@ -2,9 +2,7 @@
 // - decodeBencode("5:hello") -> "hello"
 // - decodeBencode("10:hello12345") -> "hello12345"
 
-import fs from "fs";
 import { toBenecoded } from "./values/Bencoded";
-import { DictionaryBencoded } from "./values/DictionaryBencoded";
 import { DictionaryEncoder } from "./encoders/DictionaryEncoder";
 import { ByteIterator } from "./ByteIterator";
 import { TorrentReader } from "./reader/TorrentReader";
