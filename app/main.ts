@@ -7,6 +7,7 @@ import { toBenecoded } from "./values/Bencoded";
 import { DictionaryBencoded } from "./values/DictionaryBencoded";
 import { DictionaryEncoder } from "./encoders/DictionaryEncoder";
 import { ByteIterator } from "./ByteIterator";
+import { TorrentReader } from "./reader/TorrentReader";
 
 export function decodeBencode(bencodedValue: string) {
   const bencoded = toBenecoded(bencodedValue);
@@ -21,12 +22,9 @@ function toHex(array: Uint8Array) {
 }
 
 function info(filePath: string) {
-  const file = fs.readFileSync(filePath).toString("binary");
+  const reader = new TorrentReader();
 
-  const torrent = new DictionaryBencoded(file).decoder.decode() as {
-    announce: string;
-    info: { length: string; ["piece length"]: number; pieces: string };
-  };
+  const torrent = reader.read(filePath);
 
   const bencodedInfo = new DictionaryEncoder().encode(torrent.info);
 
