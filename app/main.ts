@@ -1,7 +1,3 @@
-// Examples:
-// - decodeBencode("5:hello") -> "hello"
-// - decodeBencode("10:hello12345") -> "hello12345"
-
 import { toBenecoded } from "./values/Bencoded";
 import { DictionaryEncoder } from "./encoders/DictionaryEncoder";
 import { ByteIterator } from "./ByteIterator";
@@ -26,13 +22,13 @@ function info(filePath: string) {
 
   const bencodedInfo = new DictionaryEncoder().encode(torrent.info);
 
-  const hashed = new Bun.CryptoHasher("sha1")
+  const infoHash = new Bun.CryptoHasher("sha1")
     .update(bencodedInfo, "binary")
     .digest("hex");
 
   console.log(`Tracker URL: ${torrent.announce}`);
   console.log(`Length: ${torrent.info.length}`);
-  console.log(`Info Hash: ${hashed}`);
+  console.log(`Info Hash: ${infoHash}`);
   console.log(`Piece Length: ${torrent.info["piece length"]}`);
   console.log("Piece Hashes:");
 
@@ -44,6 +40,57 @@ function info(filePath: string) {
 
     piece = iter.next(20);
   }
+}
+function generateRandomId(length: number) {
+  const charset =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const randomValues = new Uint8Array(length);
+  crypto.getRandomValues(randomValues);
+
+  return Array.from(randomValues)
+    .map((value) => charset[value % charset.length])
+    .join("");
+}
+function urlEncode(buf: Buffer): string {
+  const byteArray = new Uint8Array(buf);
+
+  return Array.from(byteArray, (byte) => {
+    const char = String.fromCodePoint(byte);
+
+    // unreserved url characters
+    return /^[A-Za-z0-9_.!~*'()-]$/.test(char)
+      ? char
+      : `%${byte.toString(16).padStart(2, "0")}`;
+  }).join("");
+}
+
+async function fetchPeers(filePath: string) {
+  const reader = new TorrentReader();
+
+  const torrent = reader.read(filePath);
+
+  const bencoded = new DictionaryEncoder().encode(torrent.info);
+
+  const hashed = new Bun.CryptoHasher("sha1")
+    .update(bencoded, "binary")
+    .digest();
+
+  const url = new URL(torrent.announce);
+
+  url.searchParams.set("peer_id", generateRandomId(20));
+  url.searchParams.set("port", "6881");
+  url.searchParams.set("uploaded", "0");
+  url.searchParams.set("downloaded", "0");
+  url.searchParams.set("compact", "1");
+  url.searchParams.set("left", torrent.info.length.toString());
+
+  const response = await fetch(`${url}&info_hash=${urlEncode(hashed)}`, {
+    method: "GET",
+  });
+
+  const arr = new Uint8Array(await response.arrayBuffer()).toString();
+
+  return toBenecoded(arr).decoder.decode();
 }
 
 const args = process.argv;
@@ -65,4 +112,7 @@ if (args[2] === "decode") {
 } else if (args[2] === "info") {
   const torrentFilePath = args[3];
   info(torrentFilePath);
+} else if (args[2] === "peers") {
+  const torrentFilePath = args[3];
+  console.log(await fetchPeers(torrentFilePath));
 }
