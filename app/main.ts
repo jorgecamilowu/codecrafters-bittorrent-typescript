@@ -1,19 +1,8 @@
-import { toBenecoded } from "./values/Bencoded";
-import { DictionaryEncoder } from "./encoders/DictionaryEncoder";
-import { ByteIterator } from "./ByteIterator";
-import { TorrentReader } from "./reader/TorrentReader";
-
-export function decodeBencode(bencodedValue: string) {
-  const bencoded = toBenecoded(bencodedValue);
-
-  return bencoded.decoder.decode();
-}
-
-function toHex(array: Uint8Array) {
-  return array.reduce((acc, curr) => {
-    return (acc += curr.toString(16).padStart(2, "0"));
-  }, "");
-}
+import { fetchPeers } from "./trackers/fetchPeers";
+import { DictionaryEncoder } from "./torrent/encoders";
+import { ByteIterator, toHex } from "./torrent/hashing";
+import { TorrentReader } from "./torrent/reader";
+import { toBenecoded } from "./torrent/values";
 
 function info(filePath: string) {
   const reader = new TorrentReader();
@@ -41,58 +30,6 @@ function info(filePath: string) {
     piece = iter.next(20);
   }
 }
-function generateRandomId(length: number) {
-  const charset =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const randomValues = new Uint8Array(length);
-  crypto.getRandomValues(randomValues);
-
-  return Array.from(randomValues)
-    .map((value) => charset[value % charset.length])
-    .join("");
-}
-function urlEncode(buf: Buffer): string {
-  const byteArray = new Uint8Array(buf);
-
-  return Array.from(byteArray, (byte) => {
-    const char = String.fromCodePoint(byte);
-
-    // unreserved url characters
-    return /^[A-Za-z0-9_.!~*'()-]$/.test(char)
-      ? char
-      : `%${byte.toString(16).padStart(2, "0")}`;
-  }).join("");
-}
-
-async function fetchPeers(filePath: string) {
-  const reader = new TorrentReader();
-
-  const torrent = reader.read(filePath);
-
-  const bencoded = new DictionaryEncoder().encode(torrent.info);
-
-  const hashed = new Bun.CryptoHasher("sha1")
-    .update(bencoded, "binary")
-    .digest();
-
-  const url = new URL(torrent.announce);
-
-  url.searchParams.set("peer_id", generateRandomId(20));
-  url.searchParams.set("port", "6881");
-  url.searchParams.set("uploaded", "0");
-  url.searchParams.set("downloaded", "0");
-  url.searchParams.set("compact", "1");
-  url.searchParams.set("left", torrent.info.length.toString());
-
-  const response = await fetch(`${url}&info_hash=${urlEncode(hashed)}`, {
-    method: "GET",
-  });
-
-  const arr = new Uint8Array(await response.arrayBuffer()).toString();
-
-  return toBenecoded(arr).decoder.decode();
-}
-
 const args = process.argv;
 
 if (args[2] === "decode") {
@@ -102,7 +39,8 @@ if (args[2] === "decode") {
 
   // Uncomment this block to pass the first stage
   try {
-    const decoded = decodeBencode(bencodedValue);
+    const decoded = toBenecoded(bencodedValue).decoder.decode();
+
     console.log(JSON.stringify(decoded));
   } catch (error) {
     if (error instanceof Error) {
