@@ -2,8 +2,9 @@ import { DictionaryEncoder } from "../torrent/encoders";
 import { TorrentReader } from "../torrent/reader";
 import { toBenecoded } from "../torrent/values";
 import { generateRandomId, urlEncode } from ".";
+import type { TrackerResponse } from "./TrackerResponse";
 
-export async function fetchPeers(filePath: string) {
+export async function fetchPeers(filePath: string): Promise<TrackerResponse> {
   const reader = new TorrentReader();
 
   const torrent = reader.read(filePath);
@@ -31,5 +32,5 @@ export async function fetchPeers(filePath: string) {
 
   const result = binaryDecoder.decode(await response.arrayBuffer());
 
-  return toBenecoded(result).decoder.decode();
+  return toBenecoded(result).decoder.decode() as unknown as TrackerResponse;
 }

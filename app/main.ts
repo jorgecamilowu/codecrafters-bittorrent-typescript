@@ -52,5 +52,14 @@ if (args[2] === "decode") {
   info(torrentFilePath);
 } else if (args[2] === "peers") {
   const torrentFilePath = args[3];
-  console.log(await fetchPeers(torrentFilePath));
+  const { peers } = await fetchPeers(torrentFilePath);
+
+  const iter = new ByteIterator(peers);
+
+  let piece = iter.next(6);
+  while (piece) {
+    console.log(piece.toString());
+
+    piece = iter.next(6);
+  }
 }
