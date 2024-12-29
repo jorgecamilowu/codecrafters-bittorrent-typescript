@@ -11,7 +11,7 @@ export async function fetchPeers(filePath: string) {
   const bencoded = new DictionaryEncoder().encode(torrent.info);
 
   const hashed = new Bun.CryptoHasher("sha1")
-    .update(bencoded, "binary")
+    .update(bencoded, "latin1")
     .digest();
 
   const url = new URL(torrent.announce);
@@ -27,7 +27,9 @@ export async function fetchPeers(filePath: string) {
     method: "GET",
   });
 
-  const arr = new Uint8Array(await response.arrayBuffer()).toString();
+  const binaryDecoder = new TextDecoder("latin1");
 
-  return toBenecoded(arr).decoder.decode();
+  const result = binaryDecoder.decode(await response.arrayBuffer());
+
+  return toBenecoded(result).decoder.decode();
 }
