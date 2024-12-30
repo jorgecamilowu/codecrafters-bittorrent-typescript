@@ -59,7 +59,7 @@ if (args[2] === "decode") {
 
   let piece = iter.next(6);
   while (piece) {
-    const ip = piece.slice(0, 4).toString().replaceAll(",", ".");
+    const ip = piece.slice(0, 4).join(".");
     const port = Buffer.from(piece.slice(4)).readUintBE(0, 2);
 
     console.log(`${ip}:${port}`);
