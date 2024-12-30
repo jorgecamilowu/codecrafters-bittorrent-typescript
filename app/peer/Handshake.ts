@@ -1,4 +1,4 @@
-import { ByteIterator } from "../torrent/hashing";
+import { ByteIterator } from "../utils";
 
 export class Handshake {
   private length = 19;

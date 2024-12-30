@@ -1,6 +1,6 @@
 import { fetchPeers } from "./trackers/fetchPeers";
 import { DictionaryEncoder } from "./torrent/encoders";
-import { ByteIterator, toHex } from "./torrent/hashing";
+import { ByteIterator, toHex } from "./utils";
 import { TorrentReader } from "./torrent/reader";
 import { toBenecoded } from "./torrent/values";
 import { generateRandomId } from "./trackers";
