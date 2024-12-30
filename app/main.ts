@@ -3,6 +3,8 @@ import { DictionaryEncoder } from "./torrent/encoders";
 import { ByteIterator, toHex } from "./torrent/hashing";
 import { TorrentReader } from "./torrent/reader";
 import { toBenecoded } from "./torrent/values";
+import { generateRandomId } from "./trackers";
+import { Handshake, Peer } from "./peer";
 
 function info(filePath: string) {
   const reader = new TorrentReader();
@@ -65,4 +67,38 @@ if (args[2] === "decode") {
 
     piece = iter.next(6);
   }
+} else if (args[2] === "handshake") {
+  const torrentPath = args[3];
+  const peer = new Peer(args[4]);
+
+  const reader = new TorrentReader();
+
+  const torrent = reader.read(torrentPath);
+
+  const bencoded = new DictionaryEncoder().encode(torrent.info);
+
+  const hashed = new Bun.CryptoHasher("sha1")
+    .update(bencoded, "latin1")
+    .digest();
+
+  const payload = new Handshake(hashed, generateRandomId(20)).serialize();
+
+  await Bun.connect({
+    hostname: peer.ip,
+    port: peer.port,
+    socket: {
+      open(socket) {
+        socket.write(payload);
+      },
+      data(_socket, data) {
+        try {
+          const incomingHandshake = Handshake.from(data);
+
+          console.log(`Peer ID: ${toHex(incomingHandshake.peerId)}`);
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    },
+  });
 }
