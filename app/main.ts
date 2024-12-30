@@ -80,14 +80,15 @@ if (args[2] === "decode") {
     .update(bencoded, "latin1")
     .digest();
 
-  const payload = new Handshake(hashed, generateRandomId(20)).serialize();
+  const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
 
   await Bun.connect({
     hostname: peer.ip,
     port: peer.port,
     socket: {
       open(socket) {
-        socket.write(payload);
+        // initiate handshake
+        socket.write(handshake);
       },
       data(_socket, data) {
         try {
