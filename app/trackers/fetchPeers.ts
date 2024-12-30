@@ -28,9 +28,7 @@ export async function fetchPeers(filePath: string): Promise<TrackerResponse> {
     method: "GET",
   });
 
-  const binaryDecoder = new TextDecoder("latin1");
-
-  const result = binaryDecoder.decode(await response.arrayBuffer());
+  const result = Buffer.from(await response.arrayBuffer()).toString("latin1");
 
   return toBenecoded(result).decoder.decode() as unknown as TrackerResponse;
 }
