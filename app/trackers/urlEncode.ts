@@ -1,7 +1,5 @@
 export function urlEncode(buf: Buffer): string {
-  const byteArray = new Uint8Array(buf);
-
-  return Array.from(byteArray, (byte) => {
+  return Array.from(buf, (byte) => {
     const char = String.fromCodePoint(byte);
 
     // unreserved url characters
