@@ -3,9 +3,9 @@ import { ByteIterator } from "../utils";
 export class Handshake {
   private length = 19;
   private torrent = "BitTorrent protocol";
-  private reserved = Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0]);
+  private reserved = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]);
 
-  private _serialized: Uint8Array | undefined;
+  private _serialized: Buffer | undefined;
 
   constructor(readonly infoHash: Buffer, readonly peerId: string) {}
 
@@ -35,7 +35,7 @@ export class Handshake {
     );
   }
 
-  serialize(): Uint8Array {
+  serialize(): Buffer {
     if (!this._serialized) {
       const totalLength =
         1 + // for the length character 19
@@ -59,7 +59,7 @@ export class Handshake {
 
       buffer.write(this.peerId, 48, "utf-8");
 
-      this._serialized = Uint8Array.from(buffer);
+      this._serialized = buffer;
     }
 
     return this._serialized;

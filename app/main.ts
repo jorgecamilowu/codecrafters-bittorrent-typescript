@@ -88,7 +88,7 @@ if (args[2] === "decode") {
     socket: {
       open(socket) {
         // initiate handshake
-        socket.write(handshake);
+        socket.write(Uint8Array.from(handshake));
       },
       data(_socket, data) {
         try {
