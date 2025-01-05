@@ -53,22 +53,17 @@ if (args[2] === "decode") {
   info(torrentFilePath);
 } else if (args[2] === "peers") {
   const torrentFilePath = args[3];
-  const { peers } = await fetchPeers(torrentFilePath);
 
-  const iter = new ByteIterator(peers);
+  const reader = new TorrentReader();
 
-  let piece = iter.next(6);
-  while (piece) {
-    const ip = piece.slice(0, 4).join(".");
-    const port = Buffer.from(piece.slice(4)).readUintBE(0, 2);
+  const torrent = reader.read(torrentFilePath);
 
-    console.log(`${ip}:${port}`);
-
-    piece = iter.next(6);
+  for await (const peer of fetchPeers(torrent)) {
+    console.log(`${peer.ip}:${peer.port}`);
   }
 } else if (args[2] === "handshake") {
   const torrentPath = args[3];
-  const peer = new Peer(args[4]);
+  const peer = Peer.fromString(args[4]);
 
   const reader = new TorrentReader();
 

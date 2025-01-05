@@ -1,14 +1,12 @@
 import { DictionaryEncoder } from "../torrent/encoders";
-import { TorrentReader } from "../torrent/reader";
 import { toBenecoded } from "../torrent/values";
 import { generateRandomId, urlEncode } from ".";
 import type { TrackerResponse } from "./TrackerResponse";
+import type { TorrentMeta } from "../torrent/TorrentMeta";
+import { ByteIterator } from "../utils";
+import { Peer } from "../peer";
 
-export async function fetchPeers(filePath: string): Promise<TrackerResponse> {
-  const reader = new TorrentReader();
-
-  const torrent = reader.read(filePath);
-
+export async function* fetchPeers(torrent: TorrentMeta) {
   const bencoded = new DictionaryEncoder().encode(torrent.info);
 
   const hashed = new Bun.CryptoHasher("sha1")
@@ -30,5 +28,21 @@ export async function fetchPeers(filePath: string): Promise<TrackerResponse> {
 
   const result = Buffer.from(await response.arrayBuffer()).toString("latin1");
 
-  return toBenecoded(result).decoder.decode() as unknown as TrackerResponse;
+  const { peers } = toBenecoded(
+    result
+  ).decoder.decode() as unknown as TrackerResponse;
+
+  const iter = new ByteIterator(peers);
+
+  let piece = iter.next(6);
+
+  while (piece) {
+    const ip = piece.slice(0, 4).join(".");
+
+    const port = Buffer.from(piece.slice(4)).readUintBE(0, 2);
+
+    yield new Peer(ip, port);
+
+    piece = iter.next(6);
+  }
 }
