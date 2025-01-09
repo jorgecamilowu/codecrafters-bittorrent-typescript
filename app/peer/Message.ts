@@ -26,11 +26,7 @@ export class Message {
     const payload = bytes.subarray(5);
 
     if (!Object.values(Tag).includes(tag)) {
-      throw new Error("Unsupported message tag", {
-        cause: {
-          tag,
-        },
-      });
+      throw new Error(`Unsupported message tag ${tag}`);
     }
 
     return new Message(tag, payload);

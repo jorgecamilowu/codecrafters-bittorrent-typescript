@@ -19,6 +19,30 @@ class Block {
 
     return buffer;
   }
+
+  fill(payload: Buffer) {
+    if (payload.length !== this.length) {
+      throw new Error("Attempted to fill Block with mismatched payload size");
+    }
+
+    this.data = payload;
+  }
+
+  static parsePayload(payload: Buffer): {
+    index: number;
+    begin: number;
+    blockData: Buffer;
+  } {
+    const index = payload.readUintBE(0, 4);
+    const begin = payload.readUintBE(0, 4);
+    const blockData = payload.subarray(8);
+
+    return {
+      begin,
+      index,
+      blockData,
+    };
+  }
 }
 
 export class Downloader {
@@ -59,6 +83,9 @@ export class Downloader {
 
         const request = new Message(Tag.REQUEST, block.encode());
 
+        console.log("requesting first block");
+        console.log(block);
+
         socket.write(Uint8Array.from(request.encode()));
 
         break;
@@ -75,7 +102,24 @@ export class Downloader {
       case Tag.REQUEST:
         break;
       case Tag.PIECE:
-        console.log(`PIECE: ${message}`);
+        const { begin, blockData } = Block.parsePayload(message.payload);
+
+        const targetBlock = this.blocks.find((block) => block.begin === begin);
+
+        if (targetBlock) {
+          targetBlock.fill(blockData);
+        }
+
+        const nextBlock = this.nextEmptyBlock();
+
+        if (nextBlock) {
+          console.log("requesting next block");
+          console.log(nextBlock);
+
+          const request = new Message(Tag.REQUEST, nextBlock.encode());
+
+          socket.write(Uint8Array.from(request.encode()));
+        }
 
         break;
       case Tag.CANCEL:

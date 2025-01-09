@@ -139,12 +139,16 @@ if (args[2] === "decode") {
         socket.write(Uint8Array.from(handshake));
       },
       data(socket, data) {
-        if (!handshakeDone) {
-          receiveHandshake(data);
-        } else {
-          const message = Message.decode(data);
+        try {
+          if (!handshakeDone) {
+            receiveHandshake(data);
+          } else {
+            const message = Message.decode(data);
 
-          downloader.downloadPiece(socket, message);
+            downloader.downloadPiece(socket, message);
+          }
+        } catch (e) {
+          console.error(e);
         }
       },
     },
