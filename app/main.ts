@@ -125,7 +125,10 @@ if (args[2] === "decode") {
     handshakeDone = true;
   };
 
-  const downloader = new Downloader();
+  const downloader = new Downloader(
+    parseInt(pieceIndex),
+    torrent.info["piece length"]
+  );
 
   await Bun.connect({
     hostname: peer.ip,
