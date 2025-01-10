@@ -4,8 +4,9 @@ import { ByteIterator, toHex } from "./utils";
 import { TorrentReader } from "./torrent/reader";
 import { toBenecoded } from "./torrent/values";
 import { generateRandomId } from "./trackers";
-import { Handshake, Peer, MessageBuffer } from "./peer";
+import { Handshake, Peer, MessageBuffer, Piece } from "./peer";
 import { Downloader } from "./torrent/download/Downloader";
+import { invariant } from "./utils/invariant";
 
 function info(filePath: string) {
   const reader = new TorrentReader();
@@ -124,9 +125,36 @@ if (args[2] === "decode") {
     handshakeDone = true;
   };
 
+  const validatePieceHash = (downloadedPiece: Piece) => {
+    const pieceHash = new Bun.CryptoHasher("sha1")
+      .update(Uint8Array.from(downloadedPiece.data), "binary")
+      .digest("hex");
+
+    const expectedPieceHash = new ByteIterator(torrent.info.pieces)
+      .skip(parseInt(pieceIndex) * 20)
+      .next(20);
+
+    invariant(expectedPieceHash !== undefined, "Piece hash not found");
+    invariant(pieceHash === toHex(expectedPieceHash), "Piece hash mismatch");
+  };
+
   const downloader = new Downloader(
     parseInt(pieceIndex),
-    torrent.info["piece length"]
+    torrent.info["piece length"],
+    {
+      onDownloadFinish: async (piece) => {
+        invariant(
+          piece.data.length === torrent.info["piece length"],
+          "Piece length mismatch"
+        );
+
+        validatePieceHash(piece);
+
+        await Bun.write(output, Uint8Array.from(piece.data));
+
+        console.log(`Piece downloaded to ${output}`);
+      },
+    }
   );
 
   const messageBuffer = new MessageBuffer({
@@ -135,7 +163,7 @@ if (args[2] === "decode") {
     },
   });
 
-  await Bun.connect({
+  Bun.connect({
     hostname: peer.ip,
     port: peer.port,
     socket: {

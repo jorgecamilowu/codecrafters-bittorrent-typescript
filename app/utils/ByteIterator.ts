@@ -5,6 +5,12 @@ export class ByteIterator {
     this.cursor = 0;
   }
 
+  skip(target: number) {
+    this.cursor += target;
+
+    return this;
+  }
+
   next(step: number) {
     const ref = this.data.slice(this.cursor, this.cursor + step);
 
