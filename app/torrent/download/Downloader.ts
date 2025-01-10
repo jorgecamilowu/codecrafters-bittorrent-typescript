@@ -1,57 +1,22 @@
 import type { Socket } from "bun";
 import { Message, Tag } from "../../peer/Message";
+import { Block, BLOCK_SIZE } from "./Block";
+import { Piece } from "../../peer/Piece";
 
-const BLOCK_SIZE = 2 ** 14;
-
-class Block {
-  constructor(
-    readonly pieceIndex: number,
-    readonly begin: number,
-    readonly length: number,
-    public data: Buffer
-  ) {}
-
-  encode(): Buffer {
-    const buffer = Buffer.alloc(12);
-    buffer.writeUInt32BE(this.pieceIndex, 0);
-    buffer.writeUInt32BE(this.begin, 4);
-    buffer.writeUInt32BE(this.length, 8);
-
-    return buffer;
-  }
-
-  fill(payload: Buffer) {
-    if (payload.length !== this.length) {
-      throw new Error("Attempted to fill Block with mismatched payload size");
-    }
-
-    this.data = payload;
-  }
-
-  static parsePayload(payload: Buffer): {
-    index: number;
-    begin: number;
-    blockData: Buffer;
-  } {
-    const index = payload.readUintBE(0, 4);
-    const begin = payload.readUintBE(0, 4);
-    const blockData = payload.subarray(8);
-
-    return {
-      begin,
-      index,
-      blockData,
-    };
-  }
+interface Options {
+  onDownloadFinish(piece: Piece): any;
 }
 
 export class Downloader {
-  blocks: Block[];
+  blocks: Record<number, Block>;
 
-  constructor(private pieceIndex: number, private pieceLength: number) {
+  constructor(
+    private pieceIndex: number,
+    private pieceLength: number,
+    private options?: Options
+  ) {
     const nBlocks = Math.ceil(this.pieceLength / BLOCK_SIZE);
     this.blocks = Array.from({ length: nBlocks }, (_, index) => {
-      // all blocks have BLOCK_SIZE except for the last one
       const blockLength = Math.min(
         BLOCK_SIZE,
         this.pieceLength - index * BLOCK_SIZE
@@ -61,9 +26,12 @@ export class Downloader {
         this.pieceIndex,
         index * BLOCK_SIZE,
         blockLength,
-        Buffer.from([])
+        Buffer.alloc(0)
       );
-    });
+    }).reduce((acc, block) => {
+      acc[block.begin] = block;
+      return acc;
+    }, {} as Record<number, Block>);
   }
 
   downloadPiece(socket: Socket, message: Message) {
@@ -71,7 +39,7 @@ export class Downloader {
       case Tag.CHOKE:
         break;
       case Tag.UNCHOKE:
-        this.blocks.forEach((block) => {
+        Object.values(this.blocks).forEach((block) => {
           const request = new Message(Tag.REQUEST, block.encode());
 
           socket.write(Uint8Array.from(request.encode()));
@@ -93,10 +61,17 @@ export class Downloader {
       case Tag.PIECE:
         const { begin, blockData } = Block.parsePayload(message.payload);
 
-        const targetBlock = this.blocks.find((block) => block.begin === begin);
+        if (this.blocks[begin]) {
+          this.blocks[begin].data = blockData;
+        }
 
-        if (targetBlock) {
-          targetBlock.fill(blockData);
+        // done receiving all blocks
+        if (
+          Object.values(this.blocks).every((block) => block.data.length !== 0)
+        ) {
+          this.options?.onDownloadFinish?.(
+            Piece.fromBlocks(Object.values(this.blocks))
+          );
         }
 
         break;
