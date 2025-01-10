@@ -1,26 +1,28 @@
+import type { Socket } from "bun";
+
 export class MessageBuffer {
   private bufferedData: Buffer;
   private cursor: number;
   private length: number;
 
-  constructor(private onComplete: (data: Buffer) => any) {
+  constructor(private onComplete: (data: Buffer, socket: Socket) => any) {
     this.bufferedData = Buffer.alloc(0);
     this.cursor = 0;
     this.length = 0;
   }
 
-  private flush() {
-    this.onComplete(this.bufferedData);
+  private flush(socket: Socket) {
+    this.onComplete(this.bufferedData, socket);
 
     this.length = 0;
     this.cursor = 0;
     this.bufferedData = Buffer.alloc(0);
   }
 
-  receive(data: Buffer) {
+  receive(data: Buffer, socket: Socket) {
     // finished buffering data for the current message
     if (this.cursor === this.length && this.length !== 0) {
-      this.flush();
+      this.flush(socket);
     }
 
     // Receiving the start of a new message
@@ -32,8 +34,8 @@ export class MessageBuffer {
     if (this.cursor + data.length > this.length && this.length !== 0) {
       const remainingPortion = this.length - this.cursor;
 
-      this.receive(data.subarray(0, remainingPortion));
-      this.receive(data.subarray(remainingPortion));
+      this.receive(data.subarray(0, remainingPortion), socket);
+      this.receive(data.subarray(remainingPortion), socket);
 
       return;
     }
@@ -42,7 +44,7 @@ export class MessageBuffer {
     this.cursor += data.length;
 
     if (this.cursor === this.length) {
-      this.flush();
+      this.flush(socket);
     }
   }
 }

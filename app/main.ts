@@ -7,6 +7,8 @@ import { generateRandomId } from "./trackers";
 import { Handshake, Peer } from "./peer";
 import { Message } from "./peer/Message";
 import { Downloader } from "./torrent/download/Downloader";
+import { MessageBuffer } from "./torrent/download/MessageBuffer";
+import type { Socket } from "bun";
 
 function info(filePath: string) {
   const reader = new TorrentReader();
@@ -130,6 +132,14 @@ if (args[2] === "decode") {
     torrent.info["piece length"]
   );
 
+  const onMessageComplete = (data: Buffer, socket: Socket) => {
+    const message = Message.decode(data);
+
+    downloader.downloadPiece(socket, message);
+  };
+
+  const messageBuffer = new MessageBuffer(onMessageComplete);
+
   await Bun.connect({
     hostname: peer.ip,
     port: peer.port,
@@ -143,9 +153,7 @@ if (args[2] === "decode") {
           if (!handshakeDone) {
             receiveHandshake(data);
           } else {
-            const message = Message.decode(data);
-
-            downloader.downloadPiece(socket, message);
+            messageBuffer.receive(data, socket);
           }
         } catch (e) {
           console.error(e);
