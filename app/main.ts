@@ -4,11 +4,8 @@ import { ByteIterator, toHex } from "./utils";
 import { TorrentReader } from "./torrent/reader";
 import { toBenecoded } from "./torrent/values";
 import { generateRandomId } from "./trackers";
-import { Handshake, Peer } from "./peer";
-import { Message } from "./peer/Message";
+import { Handshake, Peer, MessageBuffer } from "./peer";
 import { Downloader } from "./torrent/download/Downloader";
-import { MessageBuffer } from "./torrent/download/MessageBuffer";
-import type { Socket } from "bun";
 
 function info(filePath: string) {
   const reader = new TorrentReader();

@@ -1,5 +1,5 @@
 import type { Socket } from "bun";
-import { Message } from "../../peer/Message";
+import { Message } from "./Message";
 
 interface Options {
   onComplete(message: Message, socket: Socket): any;
