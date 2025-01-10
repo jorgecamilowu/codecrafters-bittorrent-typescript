@@ -1,19 +1,23 @@
 import type { Socket } from "bun";
 import { Message } from "../../peer/Message";
 
+interface Options {
+  onComplete(message: Message, socket: Socket): any;
+}
+
 export class MessageBuffer {
   private bufferedData: Buffer;
   private cursor: number;
   private length: number;
 
-  constructor(private onComplete: (message: Message, socket: Socket) => any) {
+  constructor(private options: Options) {
     this.bufferedData = Buffer.alloc(0);
     this.cursor = 0;
     this.length = 0;
   }
 
   private flush(socket: Socket) {
-    this.onComplete(Message.decode(this.bufferedData), socket);
+    this.options.onComplete(Message.decode(this.bufferedData), socket);
 
     this.length = 0;
     this.cursor = 0;

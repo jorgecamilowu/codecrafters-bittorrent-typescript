@@ -3,7 +3,7 @@ import { MessageBuffer } from "./MessageBuffer";
 
 describe("Message Buffer", () => {
   const onComplete = mock();
-  const messageBuffer = new MessageBuffer(onComplete);
+  const messageBuffer = new MessageBuffer({ onComplete });
 
   it("buffers data until the message is complete", () => {
     messageBuffer.receive(Buffer.from([0, 0, 0, 10, 1, 2]), {} as any);

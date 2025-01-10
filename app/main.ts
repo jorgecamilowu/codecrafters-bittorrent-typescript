@@ -132,8 +132,10 @@ if (args[2] === "decode") {
     torrent.info["piece length"]
   );
 
-  const messageBuffer = new MessageBuffer((msg, socket) => {
-    downloader.downloadPiece(socket, msg);
+  const messageBuffer = new MessageBuffer({
+    onComplete: (msg, socket) => {
+      downloader.downloadPiece(socket, msg);
+    },
   });
 
   await Bun.connect({
