@@ -72,6 +72,7 @@ export class Downloader {
           this.options?.onDownloadFinish?.(
             Piece.fromBlocks(Object.values(this.blocks))
           );
+          socket.end();
         }
 
         break;
