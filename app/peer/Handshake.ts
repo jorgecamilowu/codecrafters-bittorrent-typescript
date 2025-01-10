@@ -1,33 +1,42 @@
 import { ByteIterator } from "../utils";
+import { invariant } from "../utils/invariant";
 
 export class Handshake {
-  private length = 19;
-  private torrent = "BitTorrent protocol";
+  private protocolPrefix = 19;
+  private protocol = "BitTorrent protocol";
   private reserved = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]);
-
-  private _serialized: Buffer | undefined;
 
   constructor(readonly infoHash: Buffer, readonly peerId: string) {}
 
   static from(serialized: Buffer): Handshake {
-    if (serialized.length !== 68) {
-      throw new Error("Bad Handshake format, expected length of 68");
-    }
+    invariant(
+      serialized.length >= 68,
+      "Bad Handshake format, expected min length of 68"
+    );
 
     const iter = new ByteIterator(serialized.toString("latin1"));
-    iter.next(20); // protocol
-    iter.next(8); // reserved bytes
+    iter.skip(20 + 8); // protocol + reserved bytes
     const infoHash = iter.next(20);
 
-    if (!infoHash || infoHash.length !== 20) {
-      throw new Error("Bad Handshake format, could not parse infoHash");
-    }
+    invariant(
+      infoHash !== undefined,
+      "Bad Handshake format, could not parse infoHash"
+    );
+    invariant(
+      infoHash.length === 20,
+      "Bad Handshake format, could not parse infoHash"
+    );
 
     const peerId = iter.next(20);
 
-    if (!peerId || peerId.length !== 20) {
-      throw new Error("Bad Handshake format, could not parse peerId");
-    }
+    invariant(
+      peerId !== undefined,
+      "Bad Handshake format, could not parse peerId"
+    );
+    invariant(
+      peerId.length === 20,
+      "Bad Handshake format, could not parse peerId"
+    );
 
     return new Handshake(
       Buffer.from(infoHash),
@@ -36,32 +45,12 @@ export class Handshake {
   }
 
   serialize(): Buffer {
-    if (!this._serialized) {
-      const totalLength =
-        1 + // for the length character 19
-        this.torrent.length + // 19
-        this.reserved.length + // 8
-        this.infoHash.length + // 20
-        this.peerId.length; // 20
-
-      const buffer = Buffer.alloc(totalLength);
-
-      buffer.writeUint8(this.length);
-
-      buffer.write(this.torrent, 1, "utf-8");
-
-      this.reserved.forEach((byte, index) => {
-        buffer.writeUInt8(byte, 20 + index);
-      });
-
-      // @ts-ignore
-      this.infoHash.copy(buffer, 28);
-
-      buffer.write(this.peerId, 48, "utf-8");
-
-      this._serialized = buffer;
-    }
-
-    return this._serialized;
+    return Buffer.concat([
+      Buffer.from([this.protocolPrefix]),
+      Buffer.from(this.protocol),
+      this.reserved,
+      this.infoHash,
+      Buffer.from(this.peerId),
+    ]);
   }
 }
