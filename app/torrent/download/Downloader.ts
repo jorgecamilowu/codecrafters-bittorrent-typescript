@@ -83,9 +83,6 @@ export class Downloader {
 
         const request = new Message(Tag.REQUEST, block.encode());
 
-        console.log("requesting first block");
-        console.log(block);
-
         socket.write(Uint8Array.from(request.encode()));
 
         break;
@@ -113,9 +110,6 @@ export class Downloader {
         const nextBlock = this.nextEmptyBlock();
 
         if (nextBlock) {
-          console.log("requesting next block");
-          console.log(nextBlock);
-
           const request = new Message(Tag.REQUEST, nextBlock.encode());
 
           socket.write(Uint8Array.from(request.encode()));
