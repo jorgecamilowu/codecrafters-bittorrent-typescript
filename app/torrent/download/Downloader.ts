@@ -66,24 +66,16 @@ export class Downloader {
     });
   }
 
-  private nextEmptyBlock(): Block | undefined {
-    return this.blocks.find((block) => block.data.length === 0);
-  }
-
   downloadPiece(socket: Socket, message: Message) {
     switch (message.tag) {
       case Tag.CHOKE:
         break;
       case Tag.UNCHOKE:
-        const block = this.nextEmptyBlock();
+        this.blocks.forEach((block) => {
+          const request = new Message(Tag.REQUEST, block.encode());
 
-        if (block === undefined) {
-          throw new Error("No blocks were initialized!");
-        }
-
-        const request = new Message(Tag.REQUEST, block.encode());
-
-        socket.write(Uint8Array.from(request.encode()));
+          socket.write(Uint8Array.from(request.encode()));
+        });
 
         break;
       case Tag.INTERESTED:
@@ -105,14 +97,6 @@ export class Downloader {
 
         if (targetBlock) {
           targetBlock.fill(blockData);
-        }
-
-        const nextBlock = this.nextEmptyBlock();
-
-        if (nextBlock) {
-          const request = new Message(Tag.REQUEST, nextBlock.encode());
-
-          socket.write(Uint8Array.from(request.encode()));
         }
 
         break;
