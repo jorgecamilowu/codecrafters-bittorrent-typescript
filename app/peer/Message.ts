@@ -1,3 +1,5 @@
+import { invariant } from "../util";
+
 export enum Tag {
   CHOKE,
   UNCHOKE,
@@ -18,16 +20,15 @@ export class Message {
   }
 
   static decode(bytes: Buffer): Message {
-    if (bytes.length < 5) {
-      throw new Error("Invalid peer message length");
-    }
+    invariant(bytes.length >= 5, "Invalid peer message length");
 
     const tag = bytes[4];
     const payload = bytes.subarray(5);
 
-    if (!Object.values(Tag).includes(tag)) {
-      throw new Error(`Unsupported message tag ${tag}`);
-    }
+    invariant(
+      Object.values(Tag).includes(tag),
+      `Unsupported message tag ${tag}`
+    );
 
     return new Message(tag, payload);
   }

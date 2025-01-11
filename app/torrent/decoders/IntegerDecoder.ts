@@ -1,3 +1,4 @@
+import { invariant } from "../../util";
 import type { IntegerBencoded } from "../values/IntegerBencoded";
 import type { Decoder } from "./Decoder";
 
@@ -15,11 +16,7 @@ export class IntegerDecoder implements Decoder {
 
     const output = parseInt(stringInt);
 
-    if (isNaN(output)) {
-      throw new Error("Could not parse out value", {
-        cause: { bencodedValue: this.bencoded },
-      });
-    }
+    invariant(!isNaN(output), "Could not parse out value");
 
     return output;
   }

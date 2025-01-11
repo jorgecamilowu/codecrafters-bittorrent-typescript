@@ -1,3 +1,5 @@
+import { invariant } from "../util";
+
 export class Peer {
   constructor(readonly ip: string, readonly port: number) {}
 
@@ -5,9 +7,7 @@ export class Peer {
     const ip = peerString.slice(0, peerString.indexOf(":"));
     const port = parseInt(peerString.slice(peerString.indexOf(":") + 1));
 
-    if (!ip || !port) {
-      throw new Error("Invalid peer format!");
-    }
+    invariant(ip !== undefined && port !== undefined, "Invalid peer format");
 
     return new Peer(ip, port);
   }
