@@ -1,9 +1,8 @@
 import { DictionaryEncoder } from "../torrent/encoders";
 import { toBenecoded } from "../torrent/values";
-import { generateRandomId, urlEncode } from ".";
-import type { TrackerResponse } from "./TrackerResponse";
 import type { TorrentMeta } from "../torrent/TorrentMeta";
-import { ByteIterator } from "../utils";
+import type { TrackerResponse } from "./TrackerResponse";
+import { ByteIterator, urlEncode, generateRandomId } from "../utils";
 import { Peer } from "../peer";
 
 export async function* fetchPeers(torrent: TorrentMeta) {

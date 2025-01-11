@@ -1,12 +1,9 @@
-import { fetchPeers } from "./trackers/fetchPeers";
 import { DictionaryEncoder } from "./torrent/encoders";
-import { ByteIterator, toHex } from "./utils";
 import { TorrentReader } from "./torrent/reader";
 import { toBenecoded } from "./torrent/values";
-import { generateRandomId } from "./trackers";
-import { Handshake, Peer, MessageBuffer, Piece } from "./peer";
-import { Downloader } from "./torrent/download/Downloader";
-import { invariant } from "./utils/invariant";
+import { generateRandomId, fetchPeers } from "./trackers";
+import { Handshake, Peer, MessageBuffer, Piece, Downloader } from "./peer";
+import { ByteIterator, toHex, invariant } from "./utils";
 
 function info(filePath: string) {
   const reader = new TorrentReader();

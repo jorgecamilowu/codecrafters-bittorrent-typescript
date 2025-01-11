@@ -1,4 +1,4 @@
-import type { Block } from "../torrent/download/Block";
+import type { Block } from "./Block";
 
 export class Piece {
   constructor(readonly data: Buffer) {}

@@ -1,7 +1,7 @@
 import type { Socket } from "bun";
-import { Message, Tag } from "../../peer/Message";
+import { Message, Tag } from "./Message";
 import { Block, BLOCK_SIZE } from "./Block";
-import { Piece } from "../../peer/Piece";
+import { Piece } from "./Piece";
 
 interface Options {
   onDownloadFinish(piece: Piece): any;
