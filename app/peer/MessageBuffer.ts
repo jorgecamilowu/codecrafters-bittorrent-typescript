@@ -2,7 +2,7 @@ import type { Socket } from "bun";
 import { Message } from "./Message";
 
 interface Options {
-  onComplete(message: Message, socket: Socket): any;
+  onComplete(message: Message): any;
 }
 
 export class MessageBuffer {
@@ -16,18 +16,18 @@ export class MessageBuffer {
     this.length = 0;
   }
 
-  private flush(socket: Socket) {
-    this.options.onComplete(Message.decode(this.bufferedData), socket);
+  private flush() {
+    this.options.onComplete(Message.decode(this.bufferedData));
 
     this.length = 0;
     this.cursor = 0;
     this.bufferedData = Buffer.alloc(0);
   }
 
-  receive(data: Buffer, socket: Socket) {
+  receive(data: Buffer) {
     // finished buffering data for the current message
     if (this.cursor === this.length && this.length !== 0) {
-      this.flush(socket);
+      this.flush();
     }
 
     // Receiving the start of a new message
@@ -39,8 +39,8 @@ export class MessageBuffer {
     if (this.cursor + data.length > this.length && this.length !== 0) {
       const remainingPortion = this.length - this.cursor;
 
-      this.receive(data.subarray(0, remainingPortion), socket);
-      this.receive(data.subarray(remainingPortion), socket);
+      this.receive(data.subarray(0, remainingPortion));
+      this.receive(data.subarray(remainingPortion));
 
       return;
     }
@@ -49,7 +49,7 @@ export class MessageBuffer {
     this.cursor += data.length;
 
     if (this.cursor === this.length) {
-      this.flush(socket);
+      this.flush();
     }
   }
 }

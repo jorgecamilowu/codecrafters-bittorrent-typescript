@@ -4,6 +4,7 @@ import { toBenecoded } from "./torrent/values";
 import { generateRandomId, fetchPeers } from "./tracker";
 import { Handshake, Peer, MessageBuffer, Piece, Downloader } from "./peer";
 import { ByteIterator, toHex, invariant } from "./util";
+import type { Socket } from "bun";
 
 function info(filePath: string) {
   const reader = new TorrentReader();
@@ -150,9 +151,11 @@ if (args[2] === "decode") {
     }
   );
 
+  let socketRef: Socket;
+
   const messageBuffer = new MessageBuffer({
-    onComplete: (msg, socket) => {
-      downloader.downloadPiece(socket, msg);
+    onComplete: (msg) => {
+      downloader.downloadPiece(socketRef, msg);
     },
   });
 
@@ -161,6 +164,7 @@ if (args[2] === "decode") {
     port: peer.port,
     socket: {
       open(socket) {
+        socketRef = socket;
         // initiate handshake
         socket.write(Uint8Array.from(handshake));
       },
@@ -169,7 +173,7 @@ if (args[2] === "decode") {
           if (!handshakeDone) {
             receiveHandshake(data);
           } else {
-            messageBuffer.receive(data, socket);
+            messageBuffer.receive(data);
           }
         } catch (e) {
           console.error(e);
