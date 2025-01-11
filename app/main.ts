@@ -1,7 +1,7 @@
 import { DictionaryEncoder } from "./torrent/encoders";
 import { TorrentReader } from "./torrent/reader";
 import { toBenecoded } from "./torrent/values";
-import { generateRandomId, fetchPeers } from "./trackers";
+import { generateRandomId, fetchPeers } from "./tracker";
 import { Handshake, Peer, MessageBuffer, Piece, Downloader } from "./peer";
 import { ByteIterator, toHex, invariant } from "./utils";
 
