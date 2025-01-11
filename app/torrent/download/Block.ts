@@ -16,7 +16,7 @@ export class Block {
     return buffer;
   }
 
-  static parsePayload(payload: Buffer): {
+  static parsePiecePayload(payload: Buffer): {
     index: number;
     begin: number;
     blockData: Buffer;

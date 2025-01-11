@@ -69,7 +69,7 @@ export class Downloader {
       case Tag.REQUEST:
         break;
       case Tag.PIECE:
-        const { begin, blockData } = Block.parsePayload(message.payload);
+        const { begin, blockData } = Block.parsePiecePayload(message.payload);
 
         if (this.blocks[begin]) {
           this.blocks[begin].data = blockData;
