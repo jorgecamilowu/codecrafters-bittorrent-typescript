@@ -139,15 +139,11 @@ if (args[2] === "decode") {
   };
 
   const downloader = new Downloader(
-    parseInt(pieceIndex),
+    torrent.info.length,
     torrent.info["piece length"],
+    parseInt(pieceIndex),
     {
       onDownloadFinish: async (piece) => {
-        invariant(
-          piece.data.length === torrent.info["piece length"],
-          "Piece length mismatch"
-        );
-
         validatePieceHash(piece);
 
         await Bun.write(output, Uint8Array.from(piece.data));
@@ -181,6 +177,12 @@ if (args[2] === "decode") {
         } catch (e) {
           console.error(e);
         }
+      },
+      close() {
+        console.log("Socket was closed");
+      },
+      error(_socket, error) {
+        console.error(error);
       },
     },
   });
