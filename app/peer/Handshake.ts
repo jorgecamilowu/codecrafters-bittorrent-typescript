@@ -1,5 +1,5 @@
-import { ByteIterator } from "../utils";
-import { invariant } from "../utils/invariant";
+import { ByteIterator } from "../util";
+import { invariant } from "../util/invariant";
 
 export class Handshake {
   private protocolPrefix = 19;

@@ -2,7 +2,7 @@ import { DictionaryEncoder } from "../torrent/encoders";
 import { toBenecoded } from "../torrent/values";
 import type { TorrentMeta } from "../torrent/TorrentMeta";
 import type { TrackerResponse } from "./TrackerResponse";
-import { ByteIterator, urlEncode, generateRandomId } from "../utils";
+import { ByteIterator, urlEncode, generateRandomId } from "../util";
 import { Peer } from "../peer";
 
 export async function* fetchPeers(torrent: TorrentMeta) {

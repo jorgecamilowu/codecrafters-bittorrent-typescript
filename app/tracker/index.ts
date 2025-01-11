@@ -1,3 +1,3 @@
-export { generateRandomId } from "../utils/generateRandomId";
+export { generateRandomId } from "../util/generateRandomId";
 export type { TrackerResponse } from "./TrackerResponse";
 export { fetchPeers } from "./fetchPeers";

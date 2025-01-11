@@ -3,7 +3,7 @@ import { TorrentReader } from "./torrent/reader";
 import { toBenecoded } from "./torrent/values";
 import { generateRandomId, fetchPeers } from "./tracker";
 import { Handshake, Peer, MessageBuffer, Piece, Downloader } from "./peer";
-import { ByteIterator, toHex, invariant } from "./utils";
+import { ByteIterator, toHex, invariant } from "./util";
 
 function info(filePath: string) {
   const reader = new TorrentReader();
