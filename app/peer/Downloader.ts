@@ -11,25 +11,18 @@ export class Downloader {
   blocks: Record<number, Block>;
 
   constructor(
-    private fileLength: number,
     private pieceLength: number,
     private pieceIndex: number,
     private options?: Options
   ) {
-    const nPieces = Math.ceil(this.fileLength / this.pieceLength);
-    const isLastPiece = this.pieceIndex === nPieces - 1;
-    const currentPieceLength = isLastPiece
-      ? this.fileLength % this.pieceLength
-      : this.pieceLength;
-
-    const nBlocks = Math.ceil(currentPieceLength / BLOCK_SIZE);
+    const nBlocks = Math.ceil(this.pieceLength / BLOCK_SIZE);
 
     this.blocks = Array.from({ length: nBlocks }, (_, index) => {
       const isLastBlock = index === nBlocks - 1;
 
       const blockLength =
-        isLastBlock && currentPieceLength % BLOCK_SIZE !== 0
-          ? currentPieceLength % BLOCK_SIZE
+        isLastBlock && this.pieceLength % BLOCK_SIZE !== 0
+          ? this.pieceLength % BLOCK_SIZE
           : BLOCK_SIZE;
 
       return new Block(

@@ -136,20 +136,22 @@ if (args[2] === "decode") {
     invariant(pieceHash === toHex(expectedPieceHash), "Piece hash mismatch");
   };
 
-  const downloader = new Downloader(
-    torrent.info.length,
-    torrent.info["piece length"],
-    parseInt(pieceIndex),
-    {
-      onDownloadFinish: async (piece) => {
-        validatePieceHash(piece);
+  const nPieces = Math.ceil(torrent.info.length / torrent.info["piece length"]);
 
-        await Bun.write(output, Uint8Array.from(piece.data));
+  const isLastPiece = parseInt(pieceIndex) === nPieces - 1;
+  const currentPieceLength = isLastPiece
+    ? torrent.info.length % torrent.info["piece length"]
+    : torrent.info["piece length"];
 
-        console.log(`Piece downloaded to ${output}`);
-      },
-    }
-  );
+  const downloader = new Downloader(currentPieceLength, parseInt(pieceIndex), {
+    onDownloadFinish: async (piece) => {
+      validatePieceHash(piece);
+
+      await Bun.write(output, Uint8Array.from(piece.data));
+
+      console.log(`Piece downloaded to ${output}`);
+    },
+  });
 
   let socketRef: Socket;
 
