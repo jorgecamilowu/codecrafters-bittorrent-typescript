@@ -14,7 +14,7 @@ async function downloadPiece(
   peer: Peer,
   pieceIndex: number,
   pieceLength: number,
-  output: string
+  onDownloadFinish: (piece: Piece) => Promise<void>
 ) {
   const bencoded = new DictionaryEncoder().encode(torrent.info);
 
@@ -32,27 +32,8 @@ async function downloadPiece(
     handshakeDone = true;
   };
 
-  const validatePieceHash = (downloadedPiece: Piece) => {
-    const pieceHash = new Bun.CryptoHasher("sha1")
-      .update(Uint8Array.from(downloadedPiece.data), "binary")
-      .digest("hex");
-
-    const expectedPieceHash = new ByteIterator(torrent.info.pieces)
-      .skip(pieceIndex * 20)
-      .next(20);
-
-    invariant(expectedPieceHash !== undefined, "Piece hash not found");
-    invariant(pieceHash === toHex(expectedPieceHash), "Piece hash mismatch");
-  };
-
   const downloader = new Downloader(pieceLength, pieceIndex, {
-    onDownloadFinish: async (piece) => {
-      validatePieceHash(piece);
-
-      await Bun.write(output, Uint8Array.from(piece.data));
-
-      console.log(`Piece downloaded to ${output}`);
-    },
+    onDownloadFinish,
   });
 
   let socketRef: Socket;
@@ -72,7 +53,7 @@ async function downloadPiece(
         // initiate handshake
         socket.write(Uint8Array.from(handshake));
       },
-      data(socket, data) {
+      data(_socket, data) {
         try {
           if (!handshakeDone) {
             receiveHandshake(data);
@@ -197,5 +178,32 @@ if (args[2] === "decode") {
 
   const peer = (await fetchPeers(torrent).next()).value as Peer;
 
-  await downloadPiece(torrent, peer, pieceIndex, currentPieceLength, output);
+  const validatePieceHash = (downloadedPiece: Piece) => {
+    const pieceHash = new Bun.CryptoHasher("sha1")
+      .update(Uint8Array.from(downloadedPiece.data), "binary")
+      .digest("hex");
+
+    const expectedPieceHash = new ByteIterator(torrent.info.pieces)
+      .skip(pieceIndex * 20)
+      .next(20);
+
+    invariant(expectedPieceHash !== undefined, "Piece hash not found");
+    invariant(pieceHash === toHex(expectedPieceHash), "Piece hash mismatch");
+  };
+
+  const handleDownload = async (piece: Piece): Promise<void> => {
+    validatePieceHash(piece);
+
+    await Bun.write(output, Uint8Array.from(piece.data));
+
+    console.log(`Piece downloaded to ${output}`);
+  };
+
+  await downloadPiece(
+    torrent,
+    peer,
+    pieceIndex,
+    currentPieceLength,
+    handleDownload
+  );
 }
