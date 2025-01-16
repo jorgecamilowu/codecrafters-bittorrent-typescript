@@ -12,6 +12,7 @@ const args = process.argv;
 async function downloadPiece(
   torrent: TorrentMeta,
   pieceIndex: number,
+  pieceLength: number,
   output: string
 ) {
   const bencoded = new DictionaryEncoder().encode(torrent.info);
@@ -45,14 +46,7 @@ async function downloadPiece(
     invariant(pieceHash === toHex(expectedPieceHash), "Piece hash mismatch");
   };
 
-  const nPieces = Math.ceil(torrent.info.length / torrent.info["piece length"]);
-
-  const isLastPiece = pieceIndex === nPieces - 1;
-  const currentPieceLength = isLastPiece
-    ? torrent.info.length % torrent.info["piece length"]
-    : torrent.info["piece length"];
-
-  const downloader = new Downloader(currentPieceLength, pieceIndex, {
+  const downloader = new Downloader(pieceLength, pieceIndex, {
     onDownloadFinish: async (piece) => {
       validatePieceHash(piece);
 
@@ -189,11 +183,18 @@ if (args[2] === "decode") {
 } else if (args[2] === "download_piece") {
   const output = args[4];
   const torrentPath = args[5];
-  const pieceIndex = args[6];
+  const pieceIndex = parseInt(args[6]);
 
   const reader = new TorrentReader();
 
   const torrent = reader.read(torrentPath);
 
-  await downloadPiece(torrent, parseInt(pieceIndex), output);
+  const nPieces = Math.ceil(torrent.info.length / torrent.info["piece length"]);
+
+  const isLastPiece = pieceIndex === nPieces - 1;
+  const currentPieceLength = isLastPiece
+    ? torrent.info.length % torrent.info["piece length"]
+    : torrent.info["piece length"];
+
+  await downloadPiece(torrent, pieceIndex, currentPieceLength, output);
 }
