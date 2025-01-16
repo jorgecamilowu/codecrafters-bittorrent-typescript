@@ -5,8 +5,100 @@ import { generateRandomId, fetchPeers } from "./tracker";
 import { Handshake, Peer, MessageBuffer, Piece, Downloader } from "./peer";
 import { ByteIterator, toHex, invariant } from "./util";
 import type { Socket } from "bun";
+import type { TorrentMeta } from "./torrent/TorrentMeta";
 
 const args = process.argv;
+
+async function downloadPiece(
+  torrent: TorrentMeta,
+  pieceIndex: number,
+  output: string
+) {
+  const bencoded = new DictionaryEncoder().encode(torrent.info);
+
+  const hashed = new Bun.CryptoHasher("sha1")
+    .update(bencoded, "latin1")
+    .digest();
+
+  const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
+
+  const peer = (await fetchPeers(torrent).next()).value as Peer;
+
+  let handshakeDone = false;
+
+  const receiveHandshake = (data: Buffer) => {
+    const incomingHandshake = Handshake.from(data);
+    console.log(`Peer ID: ${toHex(incomingHandshake.peerId)}`);
+    handshakeDone = true;
+  };
+
+  const validatePieceHash = (downloadedPiece: Piece) => {
+    const pieceHash = new Bun.CryptoHasher("sha1")
+      .update(Uint8Array.from(downloadedPiece.data), "binary")
+      .digest("hex");
+
+    const expectedPieceHash = new ByteIterator(torrent.info.pieces)
+      .skip(pieceIndex * 20)
+      .next(20);
+
+    invariant(expectedPieceHash !== undefined, "Piece hash not found");
+    invariant(pieceHash === toHex(expectedPieceHash), "Piece hash mismatch");
+  };
+
+  const nPieces = Math.ceil(torrent.info.length / torrent.info["piece length"]);
+
+  const isLastPiece = pieceIndex === nPieces - 1;
+  const currentPieceLength = isLastPiece
+    ? torrent.info.length % torrent.info["piece length"]
+    : torrent.info["piece length"];
+
+  const downloader = new Downloader(currentPieceLength, pieceIndex, {
+    onDownloadFinish: async (piece) => {
+      validatePieceHash(piece);
+
+      await Bun.write(output, Uint8Array.from(piece.data));
+
+      console.log(`Piece downloaded to ${output}`);
+    },
+  });
+
+  let socketRef: Socket;
+
+  const messageBuffer = new MessageBuffer({
+    onComplete: (msg) => {
+      downloader.downloadPiece(socketRef, msg);
+    },
+  });
+
+  Bun.connect({
+    hostname: peer.ip,
+    port: peer.port,
+    socket: {
+      open(socket) {
+        socketRef = socket;
+        // initiate handshake
+        socket.write(Uint8Array.from(handshake));
+      },
+      data(socket, data) {
+        try {
+          if (!handshakeDone) {
+            receiveHandshake(data);
+          } else {
+            messageBuffer.receive(data);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      },
+      close() {
+        console.log("Socket was closed");
+      },
+      error(_socket, error) {
+        console.error(error);
+      },
+    },
+  });
+}
 
 if (args[2] === "decode") {
   const bencodedValue = args[3];
@@ -103,88 +195,5 @@ if (args[2] === "decode") {
 
   const torrent = reader.read(torrentPath);
 
-  const bencoded = new DictionaryEncoder().encode(torrent.info);
-
-  const hashed = new Bun.CryptoHasher("sha1")
-    .update(bencoded, "latin1")
-    .digest();
-
-  const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
-
-  const peer = (await fetchPeers(torrent).next()).value as Peer;
-
-  let handshakeDone = false;
-
-  const receiveHandshake = (data: Buffer) => {
-    const incomingHandshake = Handshake.from(data);
-    console.log(`Peer ID: ${toHex(incomingHandshake.peerId)}`);
-    handshakeDone = true;
-  };
-
-  const validatePieceHash = (downloadedPiece: Piece) => {
-    const pieceHash = new Bun.CryptoHasher("sha1")
-      .update(Uint8Array.from(downloadedPiece.data), "binary")
-      .digest("hex");
-
-    const expectedPieceHash = new ByteIterator(torrent.info.pieces)
-      .skip(parseInt(pieceIndex) * 20)
-      .next(20);
-
-    invariant(expectedPieceHash !== undefined, "Piece hash not found");
-    invariant(pieceHash === toHex(expectedPieceHash), "Piece hash mismatch");
-  };
-
-  const nPieces = Math.ceil(torrent.info.length / torrent.info["piece length"]);
-
-  const isLastPiece = parseInt(pieceIndex) === nPieces - 1;
-  const currentPieceLength = isLastPiece
-    ? torrent.info.length % torrent.info["piece length"]
-    : torrent.info["piece length"];
-
-  const downloader = new Downloader(currentPieceLength, parseInt(pieceIndex), {
-    onDownloadFinish: async (piece) => {
-      validatePieceHash(piece);
-
-      await Bun.write(output, Uint8Array.from(piece.data));
-
-      console.log(`Piece downloaded to ${output}`);
-    },
-  });
-
-  let socketRef: Socket;
-
-  const messageBuffer = new MessageBuffer({
-    onComplete: (msg) => {
-      downloader.downloadPiece(socketRef, msg);
-    },
-  });
-
-  Bun.connect({
-    hostname: peer.ip,
-    port: peer.port,
-    socket: {
-      open(socket) {
-        socketRef = socket;
-        // initiate handshake
-        socket.write(Uint8Array.from(handshake));
-      },
-      data(socket, data) {
-        try {
-          if (!handshakeDone) {
-            receiveHandshake(data);
-          } else {
-            messageBuffer.receive(data);
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      },
-      close() {
-        console.log("Socket was closed");
-      },
-      error(_socket, error) {
-        console.error(error);
-      },
-    },
-  });
+  await downloadPiece(torrent, parseInt(pieceIndex), output);
 }
