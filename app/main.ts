@@ -6,10 +6,28 @@ import { Handshake, Peer, MessageBuffer, Piece, Downloader } from "./peer";
 import { ByteIterator, toHex, invariant } from "./util";
 import type { Socket } from "bun";
 
-function info(filePath: string) {
+const args = process.argv;
+
+if (args[2] === "decode") {
+  const bencodedValue = args[3];
+  // You can use print statements as follows for debugging, they'll be visible when running tests.
+  console.error("Logs from your program will appear here!");
+
+  try {
+    const decoded = toBenecoded(bencodedValue).decoder.decode();
+
+    console.log(JSON.stringify(decoded));
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    }
+  }
+} else if (args[2] === "info") {
+  const torrentFilePath = args[3];
+
   const reader = new TorrentReader();
 
-  const torrent = reader.read(filePath);
+  const torrent = reader.read(torrentFilePath);
 
   const bencodedInfo = new DictionaryEncoder().encode(torrent.info);
 
@@ -31,26 +49,6 @@ function info(filePath: string) {
 
     piece = iter.next(20);
   }
-}
-const args = process.argv;
-
-if (args[2] === "decode") {
-  const bencodedValue = args[3];
-  // You can use print statements as follows for debugging, they'll be visible when running tests.
-  console.error("Logs from your program will appear here!");
-
-  try {
-    const decoded = toBenecoded(bencodedValue).decoder.decode();
-
-    console.log(JSON.stringify(decoded));
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message);
-    }
-  }
-} else if (args[2] === "info") {
-  const torrentFilePath = args[3];
-  info(torrentFilePath);
 } else if (args[2] === "peers") {
   const torrentFilePath = args[3];
 
