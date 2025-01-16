@@ -11,6 +11,7 @@ const args = process.argv;
 
 async function downloadPiece(
   torrent: TorrentMeta,
+  peer: Peer,
   pieceIndex: number,
   pieceLength: number,
   output: string
@@ -22,8 +23,6 @@ async function downloadPiece(
     .digest();
 
   const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
-
-  const peer = (await fetchPeers(torrent).next()).value as Peer;
 
   let handshakeDone = false;
 
@@ -196,5 +195,7 @@ if (args[2] === "decode") {
     ? torrent.info.length % torrent.info["piece length"]
     : torrent.info["piece length"];
 
-  await downloadPiece(torrent, pieceIndex, currentPieceLength, output);
+  const peer = (await fetchPeers(torrent).next()).value as Peer;
+
+  await downloadPiece(torrent, peer, pieceIndex, currentPieceLength, output);
 }
