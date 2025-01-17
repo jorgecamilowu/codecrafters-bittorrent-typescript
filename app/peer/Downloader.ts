@@ -4,7 +4,7 @@ import { Block, BLOCK_SIZE } from "./Block";
 import { Piece } from "./Piece";
 
 interface Options {
-  onDownloadFinish(piece: Piece): any;
+  onDownloadFinish(piece: Piece, index: number): any;
 }
 
 export class Downloader {
@@ -73,8 +73,11 @@ export class Downloader {
           Object.values(this.blocks).every((block) => block.data.length !== 0)
         ) {
           this.options?.onDownloadFinish?.(
-            Piece.fromBlocks(Object.values(this.blocks))
+            Piece.fromBlocks(Object.values(this.blocks)),
+            this.pieceIndex
           );
+
+          console.log(`closing socket, piece ${this.pieceIndex} downloaded`);
           socket.end();
         }
 

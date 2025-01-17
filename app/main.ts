@@ -9,12 +9,18 @@ import type { TorrentMeta } from "./torrent/TorrentMeta";
 
 const args = process.argv;
 
+const PEER_ID = "12345678912345678912";
+
 async function downloadPiece(
   torrent: TorrentMeta,
   peer: Peer,
   pieceIndex: number,
   pieceLength: number,
-  onDownloadFinish: (piece: Piece) => Promise<void>
+  onDownloadPieceComplete: (
+    piece: Piece,
+    pieceIndex: number,
+    peer: Peer
+  ) => Promise<void>
 ) {
   const bencoded = new DictionaryEncoder().encode(torrent.info);
 
@@ -22,7 +28,8 @@ async function downloadPiece(
     .update(bencoded, "latin1")
     .digest();
 
-  const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
+  // const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
+  const handshake = new Handshake(hashed, PEER_ID).serialize();
 
   let handshakeDone = false;
 
@@ -33,7 +40,8 @@ async function downloadPiece(
   };
 
   const downloader = new Downloader(pieceLength, pieceIndex, {
-    onDownloadFinish,
+    onDownloadFinish: (piece, pieceIndex) =>
+      onDownloadPieceComplete(piece, pieceIndex, peer),
   });
 
   let socketRef: Socket;
@@ -205,5 +213,95 @@ if (args[2] === "decode") {
     pieceIndex,
     currentPieceLength,
     handleDownload
+  );
+} else if (args[2] === "download") {
+  const output = args[4];
+  const torrentPath = args[5];
+
+  const reader = new TorrentReader();
+
+  const torrent = reader.read(torrentPath);
+
+  const nPieces = Math.ceil(torrent.info.length / torrent.info["piece length"]);
+
+  const completedPieces = new Array(nPieces).fill(false);
+
+  const peers: Peer[] = [];
+
+  for await (const peer of fetchPeers(torrent)) {
+    peers.push(peer);
+  }
+
+  let tasks: {
+    pieceIndex: number;
+    pieceLength: number;
+  }[] = [];
+
+  for (let i = 0; i < nPieces; i++) {
+    const isLastPiece = i === nPieces - 1;
+    const currentPieceLength = isLastPiece
+      ? torrent.info.length % torrent.info["piece length"]
+      : torrent.info["piece length"];
+
+    tasks.push({
+      pieceIndex: i,
+      pieceLength: currentPieceLength,
+    });
+  }
+  console.log(`number of tasks: ${tasks.length}`);
+
+  const handleDownloadFileFinish = async () => {
+    console.log("Download of pieces complete, piecing together file...");
+
+    const outputFile = Bun.file(output);
+    const writer = outputFile.writer();
+
+    for (let i = 0; i < nPieces; i++) {
+      const pieceData = await Bun.file(`/tmp/piece-${i}`).arrayBuffer();
+
+      writer.write(pieceData);
+    }
+
+    console.log(`File downloaded to ${output}`);
+  };
+
+  const handleDownloadPieceFinish = async (
+    piece: Piece,
+    pieceIndex: number,
+    peer: Peer
+  ): Promise<void> => {
+    await Bun.write(`/tmp/piece-${pieceIndex}`, Uint8Array.from(piece.data));
+    completedPieces[pieceIndex] = true;
+
+    if (!completedPieces.every((completed) => completed)) {
+      const nextTask = tasks.shift();
+
+      if (nextTask) {
+        console.log(`downloading next piece ${nextTask.pieceIndex}`);
+
+        downloadPiece(
+          torrent,
+          peer,
+          nextTask.pieceIndex,
+          nextTask.pieceLength,
+          handleDownloadPieceFinish
+        );
+      }
+    } else {
+      handleDownloadFileFinish();
+    }
+  };
+
+  const peer = peers.pop();
+  const nextTask = tasks.shift();
+
+  invariant(peer !== undefined && nextTask !== undefined, "No peers or tasks");
+
+  downloadPiece(
+    torrent,
+    peer,
+    nextTask.pieceIndex,
+    nextTask.pieceLength,
+    handleDownloadPieceFinish
   );
 }
