@@ -295,7 +295,7 @@ if (args[2] === "decode") {
   };
 
   const peer = peers.pop();
-  const nextTask = tasks.shift();
+  const nextTask = tasks.pop();
 
   invariant(peer !== undefined && nextTask !== undefined, "No peers or tasks");
 
