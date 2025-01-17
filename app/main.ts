@@ -39,12 +39,14 @@ async function downloadPiece(
     handshakeDone = true;
   };
 
-  const downloader = new Downloader(pieceLength, pieceIndex, {
-    onDownloadFinish: (piece, pieceIndex) =>
-      onDownloadPieceComplete(piece, pieceIndex, peer),
-  });
-
   let socketRef: Socket;
+
+  const downloader = new Downloader(pieceLength, pieceIndex, {
+    onDownloadFinish: (piece, pieceIndex) => {
+      onDownloadPieceComplete(piece, pieceIndex, peer);
+      socketRef.end();
+    },
+  });
 
   const messageBuffer = new MessageBuffer({
     onComplete: (msg) => {

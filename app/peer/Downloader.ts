@@ -76,9 +76,6 @@ export class Downloader {
             Piece.fromBlocks(Object.values(this.blocks)),
             this.pieceIndex
           );
-
-          console.log(`closing socket, piece ${this.pieceIndex} downloaded`);
-          socket.end();
         }
 
         break;
