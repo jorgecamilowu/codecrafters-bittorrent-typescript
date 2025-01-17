@@ -48,7 +48,7 @@ async function downloadPiece(
 
   const messageBuffer = new MessageBuffer({
     onComplete: (msg) => {
-      downloader.downloadPiece(socketRef, msg);
+      downloader.handlePeerMessage(socketRef, msg);
     },
   });
 

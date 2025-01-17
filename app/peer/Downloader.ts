@@ -37,7 +37,7 @@ export class Downloader {
     }, {} as Record<number, Block>);
   }
 
-  downloadPiece(socket: Socket, message: Message) {
+  handlePeerMessage(socket: Socket, message: Message) {
     switch (message.tag) {
       case Tag.CHOKE:
         break;
