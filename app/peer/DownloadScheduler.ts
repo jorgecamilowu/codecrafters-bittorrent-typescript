@@ -22,9 +22,8 @@ export class DownloadScheduler {
         const worker = new Worker("./app/peer/workerEntry.ts");
         worker.onmessage = (message) => {
           this.idlePeers.push(peer);
-          this.onTaskComplete(message.data).then(() => {
-            this.handleNextTask();
-          });
+          this.onTaskComplete(message.data);
+          this.handleNextTask();
         };
 
         return [peer, worker];
