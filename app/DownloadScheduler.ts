@@ -7,7 +7,7 @@ export interface DownloadTask {
   pieceLength: number;
 }
 
-export class DownloadPool {
+export class DownloadScheduler {
   private workers: Map<Peer, Worker>;
   private idlePeers: Peer[];
   private tasks: DownloadTask[];

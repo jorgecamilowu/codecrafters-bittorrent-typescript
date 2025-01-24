@@ -6,82 +6,10 @@ import { Handshake, Peer, MessageBuffer, Piece, Downloader } from "./peer";
 import { ByteIterator, toHex, invariant } from "./util";
 import type { Socket } from "bun";
 import type { TorrentMeta } from "./torrent/TorrentMeta";
-import { DownloadPool } from "./DownloadScheduler";
+import { DownloadScheduler } from "./DownloadScheduler";
 import type { WorkerResult } from "./workerEntry";
 
 const args = process.argv;
-
-async function downloadPiece(
-  torrent: TorrentMeta,
-  peer: Peer,
-  pieceIndex: number,
-  pieceLength: number,
-  onDownloadPieceComplete: (
-    piece: Piece,
-    pieceIndex: number,
-    peer: Peer
-  ) => Promise<void>
-) {
-  const bencoded = new DictionaryEncoder().encode(torrent.info);
-
-  const hashed = new Bun.CryptoHasher("sha1")
-    .update(bencoded, "latin1")
-    .digest();
-
-  const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
-
-  let handshakeDone = false;
-
-  const receiveHandshake = (data: Buffer) => {
-    const incomingHandshake = Handshake.from(data);
-    console.log(`Peer ID: ${toHex(incomingHandshake.peerId)}`);
-    handshakeDone = true;
-  };
-
-  let socketRef: Socket;
-
-  const downloader = new Downloader(pieceLength, pieceIndex, {
-    onDownloadFinish: (piece, pieceIndex) => {
-      onDownloadPieceComplete(piece, pieceIndex, peer);
-      socketRef.end();
-    },
-  });
-
-  const messageBuffer = new MessageBuffer({
-    onComplete: (msg) => {
-      downloader.handlePeerMessage(socketRef, msg);
-    },
-  });
-
-  Bun.connect({
-    hostname: peer.ip,
-    port: peer.port,
-    socket: {
-      open(socket) {
-        socketRef = socket;
-        // initiate handshake
-        socket.write(Uint8Array.from(handshake));
-      },
-      data(_socket, data) {
-        try {
-          if (!handshakeDone) {
-            receiveHandshake(data);
-          } else {
-            messageBuffer.receive(data);
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      },
-      close() {
-        console.log("Socket was closed");
-      },
-      error(_socket, error) {
-        console.error(error);
-      },
-    },
-  });
-}
 
 if (args[2] === "decode") {
   const bencodedValue = args[3];
@@ -185,8 +113,6 @@ if (args[2] === "decode") {
     ? torrent.info.length % torrent.info["piece length"]
     : torrent.info["piece length"];
 
-  const peer = (await fetchPeers(torrent).next()).value as Peer;
-
   const validatePieceHash = (downloadedPiece: Piece) => {
     const pieceHash = new Bun.CryptoHasher("sha1")
       .update(Uint8Array.from(downloadedPiece.data), "binary")
@@ -200,21 +126,32 @@ if (args[2] === "decode") {
     invariant(pieceHash === toHex(expectedPieceHash), "Piece hash mismatch");
   };
 
-  const handleDownload = async (piece: Piece): Promise<void> => {
-    validatePieceHash(piece);
+  const handleDownload = async (workerResult: WorkerResult): Promise<void> => {
+    if (workerResult.status === "failed") {
+      console.error(`Failed to download piece ${workerResult.pieceIndex}`);
+      return;
+    }
 
-    await Bun.write(output, Uint8Array.from(piece.data));
+    validatePieceHash(workerResult.piece);
+
+    await Bun.write(output, Uint8Array.from(workerResult.piece.data));
 
     console.log(`Piece downloaded to ${output}`);
+    scheduler.terminate();
   };
 
-  await downloadPiece(
-    torrent,
-    peer,
+  const peers: Peer[] = [];
+
+  for await (const peer of fetchPeers(torrent)) {
+    peers.push(peer);
+  }
+
+  const scheduler = new DownloadScheduler(peers, handleDownload, torrent);
+
+  scheduler.download({
     pieceIndex,
-    currentPieceLength,
-    handleDownload
-  );
+    pieceLength: currentPieceLength,
+  });
 } else if (args[2] === "download") {
   const output = args[4];
   const torrentPath = args[5];
@@ -262,7 +199,7 @@ if (args[2] === "decode") {
     }
 
     console.log(`File downloaded to ${output}`);
-    downloadPool.terminate();
+    scheduler.terminate();
   };
 
   const handleDownloadPieceFinish = async (
@@ -286,20 +223,20 @@ if (args[2] === "decode") {
       // re-attempt download
       console.log(`Re-attempting to download piece ${result.pieceIndex}`);
 
-      downloadPool.download({
+      scheduler.download({
         pieceIndex: result.pieceIndex,
         pieceLength: torrent.info["piece length"],
       });
     }
   };
 
-  const downloadPool = new DownloadPool(
+  const scheduler = new DownloadScheduler(
     peers,
     handleDownloadPieceFinish,
     torrent
   );
 
   tasks.forEach((task) => {
-    downloadPool.download(task);
+    scheduler.download(task);
   });
 }
