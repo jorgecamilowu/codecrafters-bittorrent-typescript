@@ -1,6 +1,6 @@
-import type { Peer } from "./peer";
-import type { TorrentMeta } from "./torrent/TorrentMeta";
-import { invariant } from "./util";
+import type { Peer } from ".";
+import type { TorrentMeta } from "../torrent/TorrentMeta";
+import { invariant } from "../util";
 import type { WorkerMessage } from "./workerEntry";
 export interface DownloadTask {
   pieceIndex: number;
@@ -19,7 +19,7 @@ export class DownloadScheduler {
   ) {
     this.workers = new Map(
       peers.map((peer) => {
-        const worker = new Worker("./app/workerEntry.ts");
+        const worker = new Worker("./app/peer/workerEntry.ts");
         worker.onmessage = (message) => {
           this.idlePeers.push(peer);
           this.onTaskComplete(message.data).then(() => {

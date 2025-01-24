@@ -1,8 +1,8 @@
 import type { Socket } from "bun";
-import { Peer, Piece, Handshake, PeerMessenger, MessageBuffer } from "./peer";
-import { DictionaryEncoder } from "./torrent/encoders";
-import type { TorrentMeta } from "./torrent/TorrentMeta";
-import { generateRandomId, invariant, toHex } from "./util";
+import { Peer, Piece, Handshake, PeerMessenger, MessageBuffer } from ".";
+import { DictionaryEncoder } from "../torrent/encoders";
+import type { TorrentMeta } from "../torrent/TorrentMeta";
+import { generateRandomId, toHex } from "../util";
 
 declare var self: Worker;
 

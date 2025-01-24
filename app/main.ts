@@ -2,12 +2,14 @@ import { DictionaryEncoder } from "./torrent/encoders";
 import { TorrentReader } from "./torrent/reader";
 import { toBenecoded } from "./torrent/values";
 import { generateRandomId, fetchPeers } from "./tracker";
-import { Handshake, Peer, MessageBuffer, Piece, PeerMessenger } from "./peer";
+import {
+  DownloadScheduler,
+  Handshake,
+  Peer,
+  Piece,
+  type WorkerResult,
+} from "./peer";
 import { ByteIterator, toHex, invariant } from "./util";
-import type { Socket } from "bun";
-import type { TorrentMeta } from "./torrent/TorrentMeta";
-import { DownloadScheduler } from "./DownloadScheduler";
-import type { WorkerResult } from "./workerEntry";
 
 const args = process.argv;
 
