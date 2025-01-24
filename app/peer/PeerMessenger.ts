@@ -7,7 +7,7 @@ interface Options {
   onDownloadFinish(piece: Piece, index: number): any;
 }
 
-export class Downloader {
+export class PeerMessenger {
   blocks: Record<number, Block>;
 
   constructor(

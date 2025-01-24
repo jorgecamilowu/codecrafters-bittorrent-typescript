@@ -1,5 +1,5 @@
 import type { Socket } from "bun";
-import { Peer, Piece, Handshake, Downloader, MessageBuffer } from "./peer";
+import { Peer, Piece, Handshake, PeerMessenger, MessageBuffer } from "./peer";
 import { DictionaryEncoder } from "./torrent/encoders";
 import type { TorrentMeta } from "./torrent/TorrentMeta";
 import { generateRandomId, invariant, toHex } from "./util";
@@ -55,7 +55,7 @@ async function downloadPiece({
   let socketRef: Socket;
   let downloadCompleted = false;
 
-  const downloader = new Downloader(pieceLength, pieceIndex, {
+  const peerMessenger = new PeerMessenger(pieceLength, pieceIndex, {
     onDownloadFinish: (piece, pieceIndex) => {
       const result: WorkerResult = {
         status: "downloaded",
@@ -73,7 +73,7 @@ async function downloadPiece({
 
   const messageBuffer = new MessageBuffer({
     onComplete: (msg) => {
-      downloader.handlePeerMessage(socketRef, msg);
+      peerMessenger.handlePeerMessage(socketRef, msg);
     },
   });
 
