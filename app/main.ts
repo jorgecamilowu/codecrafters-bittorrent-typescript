@@ -6,10 +6,10 @@ import { Handshake, Peer, MessageBuffer, Piece, Downloader } from "./peer";
 import { ByteIterator, toHex, invariant } from "./util";
 import type { Socket } from "bun";
 import type { TorrentMeta } from "./torrent/TorrentMeta";
+import { DownloadPool } from "./DownloadScheduler";
+import type { WorkerResult } from "./workerEntry";
 
 const args = process.argv;
-
-const PEER_ID = "12345678912345678912";
 
 async function downloadPiece(
   torrent: TorrentMeta,
@@ -28,8 +28,7 @@ async function downloadPiece(
     .update(bencoded, "latin1")
     .digest();
 
-  // const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
-  const handshake = new Handshake(hashed, PEER_ID).serialize();
+  const handshake = new Handshake(hashed, generateRandomId(20)).serialize();
 
   let handshakeDone = false;
 
@@ -253,8 +252,6 @@ if (args[2] === "decode") {
   console.log(`number of tasks: ${tasks.length}`);
 
   const handleDownloadFileFinish = async () => {
-    console.log("Download of pieces complete, piecing together file...");
-
     const outputFile = Bun.file(output);
     const writer = outputFile.writer();
 
@@ -265,45 +262,44 @@ if (args[2] === "decode") {
     }
 
     console.log(`File downloaded to ${output}`);
+    downloadPool.terminate();
   };
 
   const handleDownloadPieceFinish = async (
-    piece: Piece,
-    pieceIndex: number,
-    peer: Peer
+    result: WorkerResult
   ): Promise<void> => {
-    await Bun.write(`/tmp/piece-${pieceIndex}`, Uint8Array.from(piece.data));
-    completedPieces[pieceIndex] = true;
+    if (result.status === "downloaded") {
+      const { piece, pieceIndex } = result;
+      await Bun.write(
+        `/tmp/piece-${result.pieceIndex}`,
+        Uint8Array.from(piece.data)
+      );
 
-    if (!completedPieces.every((completed) => completed)) {
-      const nextTask = tasks.shift();
+      console.log(`Piece ${result.pieceIndex} downloaded`);
 
-      if (nextTask) {
-        console.log(`downloading next piece ${nextTask.pieceIndex}`);
+      completedPieces[pieceIndex] = true;
 
-        downloadPiece(
-          torrent,
-          peer,
-          nextTask.pieceIndex,
-          nextTask.pieceLength,
-          handleDownloadPieceFinish
-        );
+      if (completedPieces.every((completed) => completed)) {
+        handleDownloadFileFinish();
       }
     } else {
-      handleDownloadFileFinish();
+      // re-attempt download
+      console.log(`Re-attempting to download piece ${result.pieceIndex}`);
+
+      downloadPool.download({
+        pieceIndex: result.pieceIndex,
+        pieceLength: torrent.info["piece length"],
+      });
     }
   };
 
-  const peer = peers.pop();
-  const nextTask = tasks.pop();
-
-  invariant(peer !== undefined && nextTask !== undefined, "No peers or tasks");
-
-  downloadPiece(
-    torrent,
-    peer,
-    nextTask.pieceIndex,
-    nextTask.pieceLength,
-    handleDownloadPieceFinish
+  const downloadPool = new DownloadPool(
+    peers,
+    handleDownloadPieceFinish,
+    torrent
   );
+
+  tasks.forEach((task) => {
+    downloadPool.download(task);
+  });
 }

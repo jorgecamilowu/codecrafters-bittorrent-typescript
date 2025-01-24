@@ -11,4 +11,8 @@ export class Peer {
 
     return new Peer(ip, port);
   }
+
+  toString() {
+    return `${this.ip}:${this.port}`;
+  }
 }
